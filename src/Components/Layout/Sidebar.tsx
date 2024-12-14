@@ -7,7 +7,8 @@ import {
 } from "@heroicons/react/24/outline";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
 import LogoutRoundedIcon from "@mui/icons-material/LogoutRounded";
-import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
+import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
+import FormatListBulletedRoundedIcon from "@mui/icons-material/FormatListBulletedRounded";
 import {
   Avatar,
   Dropdown,
@@ -50,7 +51,7 @@ export default function Sidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const currentUrl = window.location.pathname;
 
-  const [marketing, setMarketing] = useState<NavigationItem[]>([]);
+  const [catalog, setCatalog] = useState<NavigationItem[]>([]);
   const [userData, setUserData] = useState<Employee>(USERDATA_VALUE);
 
   useEffect(() => {
@@ -60,14 +61,23 @@ export default function Sidebar() {
         setUserData(res.data);
       });
 
-    setMarketing([
+    setCatalog([
       {
-        name: "Contatti",
-        href: "/contacts",
-        icon: ContactsOutlinedIcon,
+        name: "Prodotti",
+        href: "/products",
+        icon: StorefrontOutlinedIcon,
         current: isSubRoute({
           currentUrl,
-          parentRoute: { href: "/contacts", subRoutes: [] },
+          parentRoute: { href: "/products", subRoutes: [] },
+        }),
+      },
+      {
+        name: "Categorie",
+        href: "/categories",
+        icon: FormatListBulletedRoundedIcon,
+        current: isSubRoute({
+          currentUrl,
+          parentRoute: { href: "/categories", subRoutes: [] },
         }),
       },
     ]);
@@ -211,13 +221,13 @@ export default function Sidebar() {
                         </ul>
                       </li>
 
-                      {marketing && (
+                      {catalog && (
                         <li>
                           <div className="text-xs font-semibold leading-6 text-gray-400">
-                            Marketing
+                            Catalogo
                           </div>
                           <ul role="list" className="-mx-2 mt-2 space-y-1">
-                            {marketing.map((item) => (
+                            {catalog.map((item) => (
                               <li key={item.name}>
                                 <a
                                   href={item.href}
@@ -291,13 +301,13 @@ export default function Sidebar() {
                 </ul>
               </li>
 
-              {marketing && (
+              {catalog && (
                 <li>
                   <div className="text-xs font-semibold leading-6 text-gray-400">
-                    Marketing
+                    Catalogo
                   </div>
                   <ul role="list" className="-mx-2 mt-2 space-y-1">
-                    {marketing.map((item) => (
+                    {catalog.map((item) => (
                       <li key={item.name}>
                         <a
                           href={item.href}
