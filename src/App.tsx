@@ -7,6 +7,7 @@ import Loader from "./Components/Layout/Loader";
 import Sidebar from "./Components/Layout/Sidebar";
 import Login from "./Pages/Login/Login";
 import Dashboard from "./Pages/Dashboard/Dashboard";
+import ProductPage from "./Pages/Products/ProductPage";
 
 const App: React.FC = () => {
   axios.defaults.baseURL = API_URL;
@@ -62,6 +63,7 @@ const ProtectedRoutes: React.FC = () => {
     <Routes>
       <Route element={<Outlet />}>
         <Route element={<Dashboard />} path="/" />
+        <Route element={<ProductPage />} path="/products" />
       </Route>
     </Routes>
   );
