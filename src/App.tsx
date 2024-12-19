@@ -8,6 +8,8 @@ import Sidebar from "./Components/Layout/Sidebar";
 import Login from "./Pages/Login/Login";
 import Dashboard from "./Pages/Dashboard/Dashboard";
 import ProductPage from "./Pages/Products/ProductPage";
+import AddProductPage from "./Pages/Products/AddProductPage";
+import CategoryPage from "./Pages/Categories/CategoryPage";
 
 const App: React.FC = () => {
   axios.defaults.baseURL = API_URL;
@@ -64,6 +66,8 @@ const ProtectedRoutes: React.FC = () => {
       <Route element={<Outlet />}>
         <Route element={<Dashboard />} path="/" />
         <Route element={<ProductPage />} path="/products" />
+        <Route element={<AddProductPage />} path="/products/add" />
+        <Route element={<CategoryPage />} path="/categories" />
       </Route>
     </Routes>
   );

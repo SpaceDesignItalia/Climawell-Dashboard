@@ -15,14 +15,11 @@ import {
 import axios from "axios";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
-import ViewProductModal from "./ViewProductModal";
+import ViewCategoryModal from "./ViewCategoryModal";
 
 export const columns = [
   { name: "Id", uid: "id" },
   { name: "Nome", uid: "name" },
-  { name: "Descrizione", uid: "description" },
-  { name: "In evidenza", uid: "highlight" },
-  { name: "Quantità", uid: "quantity" },
   { name: "Azioni", uid: "actions" },
 ];
 
@@ -154,40 +151,40 @@ const statusColorMap = {
 };
 
 export default function ProductTable() {
-  const [products, setProducts] = useState([]);
-  const [viewProductModalOpen, setViewProductModalOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [viewCategoryModalOpen, setViewCategoryModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const openModal = (product) => {
-    setSelectedProduct(product);
-    setViewProductModalOpen(true);
+  const openModal = (Category) => {
+    setSelectedCategory(Category);
+    setViewCategoryModalOpen(true);
   };
 
   const closeModal = () => {
-    setViewProductModalOpen(false);
-    setSelectedProduct(null);
+    setViewCategoryModalOpen(false);
+    setSelectedCategory(null);
   };
 
-  const deleteProduct = async (productId) => {
-    await axios.delete(`/Products/DELETE/DeleteProduct/${productId}`).then(
+  const deleteCategory = (id) => {
+    axios.delete(`/Products/DELETE/DeleteCategory/${id}`).then(
       (res) => {
-        fetchProducts();
+        fetchCategories();
       },
       (err) => {
-        console.error("Errore durante l'eliminazione del prodotto:", err);
+        console.error("Errore durante l'eliminazione della categoria:", err);
       }
     );
   };
 
   const handleSearch = () => {
-    const response = axios.get("/Products/GET/SearchProductByName").then(
+    const response = axios.get("/Products/GET/SearchCategoryByName").then(
       (res) => {
         return res.data;
       },
       (err) => {
-        console.error("Errore durante la ricerca del prodotto:", err);
+        console.error("Errore durante la ricerca della categoria:", err);
       }
     );
   };
@@ -195,87 +192,51 @@ export default function ProductTable() {
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
-  const fetchProducts = async () => {
+
+  const fetchCategories = async () => {
     try {
-      const response = await axios.get("/Products/GET/GetAllProducts");
+      const response = await axios.get("/Products/GET/GetAllCategories");
 
-      const products = response.data;
-
-      for (let product of products) {
-        const isFeatured = await axios.get(
-          `/Products/GET/IsFeatured/${product.ProductId}`
-        );
-        product.IsFeatured = isFeatured.data;
-        if (product.CategoryId) {
-          const categoryResponse = await axios.get(
-            `/Products/GET/GetCategoryById/${product.CategoryId}`
-          );
-
-          if (
-            Array.isArray(categoryResponse.data) &&
-            categoryResponse.data.length > 0
-          ) {
-            const category = categoryResponse.data[0];
-            product.CategoryName = category.CategoryName || "Sconosciuta";
-          }
-        }
-      }
-
-      setProducts(products);
+      setCategories(response.data);
       setLoading(false);
     } catch (error) {
-      console.error("Errore durante il fetch dei prodotti:", error);
+      console.error("Errore durante il fetch delle categorie:", error);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
+    fetchCategories();
   }, []);
 
-  const renderCell = React.useCallback((product, columnKey) => {
-    const cellValue = product[columnKey];
+  const renderCell = React.useCallback((category, columnKey) => {
+    const cellValue = category[columnKey];
 
     switch (columnKey) {
       case "id":
-        return product.ProductId; // Mostra l'id del prodotto
+        return category.CategoryId;
       case "name":
-        return product.ProductName; // Mostra il nome del prodotto
-      case "description":
-        return product.ProductDescription; // Mostra la descrizione del prodotto
-      case "highlight":
-        return product.IsFeatured ? (
-          <Chip color="success" variant="faded">
-            Si
-          </Chip>
-        ) : (
-          <Chip color="danger" variant="faded">
-            No
-          </Chip>
-        ); // Mostra se il prodotto è in evidenza
-      case "quantity":
-        return product.ProductAmount; // Mostra la quantità del prodotto
+        return category.CategoryName;
       case "actions":
         return (
           <div className="flex justify-center items-center gap-2">
-            <Tooltip content="Dettagli prodotto">
+            <Tooltip content="Dettagli categoria">
               <span
                 className="text-lg text-default-400 cursor-pointer active:opacity-50"
-                onClick={() => openModal(product)} // Passa il prodotto al modal
+                onClick={() => openModal(category)}
               >
                 <EyeIcon />
               </span>
             </Tooltip>
-            <Tooltip content="Modifica prodotto">
+            <Tooltip content="Modifica categoria">
               <span className="text-lg text-default-400 cursor-pointer active:opacity-50">
                 <EditIcon />
               </span>
             </Tooltip>
-            <Tooltip
-              color="danger"
-              content="Elimina prodotto"
-              onClick={() => deleteProduct(product.ProductId)}
-            >
-              <span className="text-lg text-danger cursor-pointer active:opacity-50">
+            <Tooltip color="danger" content="Elimina categoria">
+              <span
+                className="text-lg text-danger cursor-pointer active:opacity-50"
+                onClick={() => deleteCategory(category.CategoryId)}
+              >
                 <DeleteIcon />
               </span>
             </Tooltip>
@@ -299,7 +260,7 @@ export default function ProductTable() {
                 variant="bordered"
                 startContent={<SearchOutlinedIcon className="text-gray-400" />}
                 className="w-full md:w-1/3"
-                placeholder="Cerca per nome prodotto..."
+                placeholder="Cerca per nome categoria..."
                 value={searchQuery}
                 onChange={handleSearchChange}
               />
@@ -323,7 +284,7 @@ export default function ProductTable() {
               className="min-w-fit"
               href="/products/add"
             >
-              Aggiungi Prodotto
+              Aggiungi Categoria di prodotti
             </Button>
           </div>
         }
@@ -338,9 +299,9 @@ export default function ProductTable() {
             </TableColumn>
           )}
         </TableHeader>
-        <TableBody items={products}>
+        <TableBody items={categories}>
           {(item) => (
-            <TableRow key={item.ProductId}>
+            <TableRow key={item.CategoryId}>
               {(columnKey) => (
                 <TableCell>{renderCell(item, columnKey)}</TableCell>
               )}
@@ -349,12 +310,11 @@ export default function ProductTable() {
         </TableBody>
       </Table>
 
-      {/* Mostra il modal solo se è aperto */}
-      {viewProductModalOpen && (
-        <ViewProductModal
-          isOpen={viewProductModalOpen}
+      {viewCategoryModalOpen && (
+        <ViewCategoryModal
+          isOpen={viewCategoryModalOpen}
           isClosed={closeModal}
-          ProductData={selectedProduct}
+          CategoryData={selectedCategory}
         />
       )}
     </div>

@@ -5,6 +5,7 @@ import {
   ModalBody,
   ModalFooter,
   Button,
+  Chip,
 } from "@nextui-org/react";
 import { useEffect, useState } from "react";
 import axios from "axios";
@@ -19,6 +20,7 @@ interface Product {
   Width: number;
   Height: number;
   Depth: number;
+  isFeatured: boolean;
   CategoryId: number;
   CategoryName: string;
   ProductModelGroupId: string;
@@ -51,9 +53,19 @@ export default function ViewProductModal({
       backdrop="blur"
     >
       <ModalContent>
-        <ModalHeader className="flex flex-col gap-1">
-          Anteprima di {ProductData.ProductName}
+        <ModalHeader className="flex items-center gap-2">
+          <span>Anteprima di {ProductData.ProductName}</span>
+          {ProductData.IsFeatured ? (
+            <Chip className="my-auto" color="success" variant="faded">
+              In evidenza
+            </Chip>
+          ) : (
+            <Chip className="my-auto" color="danger" variant="faded">
+              Non in evidenza
+            </Chip>
+          )}
         </ModalHeader>
+
         <ModalBody>
           <div className="mt-6 border-t border-gray-100">
             <dl className="divide-y divide-gray-100">
@@ -78,7 +90,9 @@ export default function ViewProductModal({
                   Categoria
                 </dt>
                 <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">
-                  {ProductData.CategoryName}
+                  {ProductData.CategoryName
+                    ? ProductData.CategoryName
+                    : "Non specificata"}
                 </dd>
               </div>
               <div className="flex flex-row px-4 py-6 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-0">
