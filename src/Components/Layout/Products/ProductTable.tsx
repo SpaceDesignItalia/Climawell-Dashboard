@@ -182,19 +182,28 @@ export default function ProductTable() {
   };
 
   const handleSearch = () => {
-    const response = axios.get("/Products/GET/SearchProductByName").then(
-      (res) => {
-        return res.data;
-      },
-      (err) => {
-        console.error("Errore durante la ricerca del prodotto:", err);
-      }
-    );
+    if (searchQuery === "") {
+      fetchProducts();
+    } else {
+      axios
+        .get(`/Products/GET/SearchProductByName`, {
+          params: {
+            searchQuery: searchQuery,
+          },
+        })
+        .then((res) => {
+          setProducts(res.data);
+        })
+        .catch((err) => {
+          console.error("Errore durante la ricerca del prodotto:", err);
+        });
+    }
   };
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
+
   const fetchProducts = async () => {
     try {
       const response = await axios.get("/Products/GET/GetAllProducts");

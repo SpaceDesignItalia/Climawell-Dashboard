@@ -179,14 +179,22 @@ export default function ProductTable() {
   };
 
   const handleSearch = () => {
-    const response = axios.get("/Products/GET/SearchCategoryByName").then(
-      (res) => {
-        return res.data;
-      },
-      (err) => {
-        console.error("Errore durante la ricerca della categoria:", err);
-      }
-    );
+    if (searchQuery === "") {
+      fetchCategories();
+    } else {
+      axios
+        .get(`/Products/GET/SearchCategoryByName`, {
+          params: {
+            searchQuery: searchQuery,
+          },
+        })
+        .then((res) => {
+          setCategories(res.data);
+        })
+        .catch((err) => {
+          console.error("Errore durante la ricerca della categoria:", err);
+        });
+    }
   };
 
   const handleSearchChange = (e) => {
@@ -228,9 +236,12 @@ export default function ProductTable() {
               </span>
             </Tooltip>
             <Tooltip content="Modifica categoria">
-              <span className="text-lg text-default-400 cursor-pointer active:opacity-50">
+              <a
+                href={`/categories/edit/${category.CategoryId}`}
+                className="text-lg text-default-400 cursor-pointer active:opacity-50"
+              >
                 <EditIcon />
-              </span>
+              </a>
             </Tooltip>
             <Tooltip color="danger" content="Elimina categoria">
               <span
@@ -282,7 +293,7 @@ export default function ProductTable() {
               radius="full"
               startContent={<AddOutlinedIcon />}
               className="min-w-fit"
-              href="/products/add"
+              href="/categories/add"
             >
               Aggiungi Categoria di prodotti
             </Button>

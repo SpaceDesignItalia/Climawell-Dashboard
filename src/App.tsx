@@ -10,6 +10,9 @@ import Dashboard from "./Pages/Dashboard/Dashboard";
 import ProductPage from "./Pages/Products/ProductPage";
 import AddProductPage from "./Pages/Products/AddProductPage";
 import CategoryPage from "./Pages/Categories/CategoryPage";
+import AddCategoryPage from "./Pages/Categories/AddCategoryPage";
+import EditProductPage from "./Pages/Products/EditProductPage";
+import EditCategoryPage from "./Pages/Categories/EditCategoryPage";
 
 const App: React.FC = () => {
   axios.defaults.baseURL = API_URL;
@@ -67,7 +70,13 @@ const ProtectedRoutes: React.FC = () => {
         <Route element={<Dashboard />} path="/" />
         <Route element={<ProductPage />} path="/products" />
         <Route element={<AddProductPage />} path="/products/add" />
+        <Route element={<EditProductPage />} path="/products/edit/:productId" />
         <Route element={<CategoryPage />} path="/categories" />
+        <Route element={<AddCategoryPage />} path="/categories/add" />
+        <Route
+          element={<EditCategoryPage />}
+          path="/categories/edit/:categoryId"
+        />
       </Route>
     </Routes>
   );
