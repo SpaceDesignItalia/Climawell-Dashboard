@@ -68,7 +68,10 @@ export default function Sidebar() {
         icon: StorefrontOutlinedIcon,
         current: isSubRoute({
           currentUrl,
-          parentRoute: { href: "/products", subRoutes: [] },
+          parentRoute: {
+            href: "/products",
+            subRoutes: ["/products/add-product"],
+          },
         }),
       },
       {
@@ -77,7 +80,10 @@ export default function Sidebar() {
         icon: FormatListBulletedRoundedIcon,
         current: isSubRoute({
           currentUrl,
-          parentRoute: { href: "/categories", subRoutes: [] },
+          parentRoute: {
+            href: "/categories",
+            subRoutes: ["/categories/add-category"],
+          },
         }),
       },
     ]);

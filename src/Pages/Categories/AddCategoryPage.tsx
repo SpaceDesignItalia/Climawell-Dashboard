@@ -2,31 +2,78 @@ import { Input, Button } from "@nextui-org/react";
 import SaveIcon from "@mui/icons-material/Save";
 import { useState } from "react";
 import axios from "axios";
+import StatusAlert from "../../Components/Layout/StatusAlert";
+
+interface AlertData {
+  isOpen: boolean;
+  onClose: () => void;
+  alertTitle: string;
+  alertDescription: string;
+  alertColor: "green" | "red" | "yellow";
+}
+
+const initialAlertData: AlertData = {
+  isOpen: false,
+  onClose: () => {},
+  alertTitle: "",
+  alertDescription: "",
+  alertColor: "red",
+};
 
 export default function AddCategoryPage() {
   const [categoryName, setCategoryName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [alertData, setAlertData] = useState<AlertData>(initialAlertData);
 
-  const addCategory = async () => {
+  const HandleAddCategory = async () => {
     try {
+      setIsSaving(true);
       const res = await axios.post("/Products/POST/AddCategory", {
         CategoryName: categoryName,
       });
-      setCategoryName("");
-    } catch (error) {
-      console.error("Errore durante l'aggiunta della categoria:", error);
-    }
-  };
 
-  const handleAddCategory = () => {
-    setIsSaving(true);
-    addCategory().then(() => {
+      if (res.status == 200) {
+        setAlertData({
+          isOpen: true,
+          onClose: () => setAlertData((prev) => ({ ...prev, isOpen: false })),
+          alertTitle: "Operazione completata",
+          alertDescription: "Categoria aggiunta con successo",
+          alertColor: "green",
+        });
+        window.location.href = "/categories";
+      }
+    } catch (error) {
       setIsSaving(false);
-    });
+      if (axios.isAxiosError(error)) {
+        // Controllo dell'errore specifico 409 (azienda con lo stesso nome)
+        if (error.response?.status === 409) {
+          setAlertData({
+            isOpen: true,
+            onClose: () => setAlertData((prev) => ({ ...prev, isOpen: false })),
+            alertTitle: "Conflitto durante l'operazione",
+            alertDescription:
+              "Esiste già una categoria con questo nome. Per favore, usa un nome differente.",
+            alertColor: "yellow",
+          });
+        } else {
+          // Messaggio di errore generico in caso di altri problemi con la richiesta
+          setAlertData({
+            isOpen: true,
+            onClose: () => setAlertData((prev) => ({ ...prev, isOpen: false })),
+            alertTitle: "Errore durante l'operazione",
+            alertDescription:
+              "Si è verificato un errore durante l'aggiunta della categoria. Per favore, riprova più tardi.",
+            alertColor: "red",
+          });
+        }
+        console.error("Errore durante l'aggiunta della categoria:", error);
+      }
+    }
   };
 
   return (
     <div className="py-10 m-0 lg:ml-72">
+      <StatusAlert AlertData={alertData} />
       <header>
         <div className="flex flex-col gap-3 px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
@@ -72,8 +119,9 @@ export default function AddCategoryPage() {
                   <Button
                     color="primary"
                     radius="full"
-                    startContent={<SaveIcon />}
-                    onClick={handleAddCategory}
+                    startContent={!isSaving && <SaveIcon />}
+                    onClick={HandleAddCategory}
+                    isLoading={isSaving}
                     isDisabled={!categoryName || isSaving}
                   >
                     {isSaving ? "Salvataggio..." : "Salva Categoria"}

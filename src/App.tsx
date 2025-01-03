@@ -69,13 +69,16 @@ const ProtectedRoutes: React.FC = () => {
       <Route element={<Outlet />}>
         <Route element={<Dashboard />} path="/" />
         <Route element={<ProductPage />} path="/products" />
-        <Route element={<AddProductPage />} path="/products/add" />
-        <Route element={<EditProductPage />} path="/products/edit/:productId" />
+        <Route element={<AddProductPage />} path="/products/add-product" />
+        <Route
+          element={<EditProductPage />}
+          path="/products/edit-product/:productId"
+        />
         <Route element={<CategoryPage />} path="/categories" />
-        <Route element={<AddCategoryPage />} path="/categories/add" />
+        <Route element={<AddCategoryPage />} path="/categories/add-category" />
         <Route
           element={<EditCategoryPage />}
-          path="/categories/edit/:categoryId"
+          path="/categories/edit-category/:categoryId"
         />
       </Route>
     </Routes>
