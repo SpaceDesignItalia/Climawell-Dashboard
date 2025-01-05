@@ -8,7 +8,7 @@ import {
   Tooltip,
   useDisclosure,
   Chip,
-  cn,
+  Image,
 } from "@nextui-org/react";
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import { useEffect, useState } from "react";
@@ -175,16 +175,16 @@ export default function ViewProductModal({
                     </dt>
                     <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0 flex flex-col gap-5">
                       {productImages.map((image: any) => (
-                        <img
+                        <Image
+                          width={400}
+                          height={400}
+                          alt={image.ProductImageUrl}
                           src={
-                            API_URL_IMG + "/uploads/" + image.ProductImageUrl
+                            API_URL_IMG +
+                            "/uploads/ProductImages/" +
+                            image.ProductImageUrl
                           }
-                          className={cn(
-                            image
-                              ? "lg:col-span-2 lg:row-span-2"
-                              : "hidden lg:block",
-                            "rounded-lg w-auto border-2"
-                          )}
+                          className="rounded-lg w-auto border-2"
                         />
                       ))}
                     </dd>

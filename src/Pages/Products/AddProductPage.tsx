@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import AddAPhotoRoundedIcon from "@mui/icons-material/AddAPhotoRounded";
+import StatusAlert from "../../Components/Layout/StatusAlert";
 
 interface Category {
   CategoryId: number;
@@ -25,13 +26,12 @@ interface Category {
 interface ProductData {
   ProductName: string;
   ProductPrice: number;
-  ProductQuantity: number;
+  ProductAmount: number;
   ProductCategoryId: number;
   ProductDepth: number;
   ProductHeight: number;
   ProductWidth: number;
   ProductWeight: number;
-  ProductStock: number;
   ProductDescription: string;
   IsFeatured: boolean;
   ProductImages: Blob[];
@@ -40,16 +40,31 @@ interface ProductData {
 const INITIAL_PRODUCTDATA: ProductData = {
   ProductName: "",
   ProductPrice: 0,
-  ProductQuantity: 0,
+  ProductAmount: 0,
   ProductCategoryId: 0,
   ProductDepth: 0,
   ProductHeight: 0,
   ProductWidth: 0,
   ProductWeight: 0,
-  ProductStock: 0,
   ProductDescription: "",
   IsFeatured: false,
   ProductImages: [],
+};
+
+interface AlertData {
+  isOpen: boolean;
+  onClose: () => void;
+  alertTitle: string;
+  alertDescription: string;
+  alertColor: "green" | "red" | "yellow";
+}
+
+const initialAlertData: AlertData = {
+  isOpen: false,
+  onClose: () => {},
+  alertTitle: "",
+  alertDescription: "",
+  alertColor: "red",
 };
 
 export default function AddProductPage() {
@@ -59,6 +74,7 @@ export default function AddProductPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [localImages, setLocalImages] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<number[]>([]);
+  const [alertData, setAlertData] = useState<AlertData>(initialAlertData);
 
   const fetchCategories = async () => {
     try {
@@ -88,31 +104,26 @@ export default function AddProductPage() {
   };
 
   async function handleAddProduct() {
-    console.log(productData);
-
     try {
+      setIsSaving(true);
       // Crea un nuovo oggetto FormData
       const formData = new FormData();
 
       // Aggiungi i dati del prodotto alla FormData
       formData.append("ProductName", productData.ProductName);
       formData.append("ProductPrice", productData.ProductPrice.toString());
-      formData.append(
-        "ProductQuantity",
-        productData.ProductQuantity.toString()
-      );
+      formData.append("ProductAmount", productData.ProductAmount.toString());
       formData.append("CategoryId", productData.ProductCategoryId.toString());
       formData.append("ProductDepth", productData.ProductDepth.toString());
       formData.append("ProductHeight", productData.ProductHeight.toString());
       formData.append("ProductWidth", productData.ProductWidth.toString());
       formData.append("ProductWeight", productData.ProductWeight.toString());
-      formData.append("ProductStock", productData.ProductStock.toString());
       formData.append("ProductDescription", productData.ProductDescription);
       formData.append("IsFeatured", productData.IsFeatured ? "true" : "false");
 
       // Aggiungi le immagini del prodotto (se presenti)
-      productData.ProductImages.forEach((image, index) => {
-        formData.append(`ProductImages[${index}]`, image);
+      productData.ProductImages.forEach((image) => {
+        formData.append("files", image); // Same field name for all images
       });
 
       // Esegui la richiesta POST per aggiungere il prodotto
@@ -120,12 +131,41 @@ export default function AddProductPage() {
 
       // Gestisci la risposta
       if (response.status === 200) {
-        console.log("Prodotto aggiunto con successo");
-        // Puoi fare altre azioni qui, come un redirect o una notifica
+        setAlertData({
+          isOpen: true,
+          onClose: () => setAlertData((prev) => ({ ...prev, isOpen: false })),
+          alertTitle: "Operazione completata",
+          alertDescription: "Prodotto aggiunto con successo",
+          alertColor: "green",
+        });
+        window.location.href = "/products";
       }
     } catch (error) {
-      console.error("Errore durante l'aggiunta del prodotto:", error);
-      // Gestisci eventuali errori qui
+      setIsSaving(false);
+      if (axios.isAxiosError(error)) {
+        // Controllo dell'errore specifico 409 (azienda con lo stesso nome)
+        if (error.response?.status === 409) {
+          setAlertData({
+            isOpen: true,
+            onClose: () => setAlertData((prev) => ({ ...prev, isOpen: false })),
+            alertTitle: "Conflitto durante l'operazione",
+            alertDescription:
+              "Esiste già un prodotto con questo nome. Per favore, usa un nome differente.",
+            alertColor: "yellow",
+          });
+        } else {
+          // Messaggio di errore generico in caso di altri problemi con la richiesta
+          setAlertData({
+            isOpen: true,
+            onClose: () => setAlertData((prev) => ({ ...prev, isOpen: false })),
+            alertTitle: "Errore durante l'operazione",
+            alertDescription:
+              "Si è verificato un errore durante l'aggiunta del prodotto. Per favore, riprova più tardi.",
+            alertColor: "red",
+          });
+        }
+        console.error("Errore durante l'aggiunta del prodotto:", error);
+      }
     }
   }
 
@@ -178,6 +218,7 @@ export default function AddProductPage() {
 
   return (
     <div className="py-10 m-0 lg:ml-72">
+      <StatusAlert AlertData={alertData} />
       <header>
         <div className="flex flex-col gap-3 px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
@@ -284,7 +325,7 @@ export default function AddProductPage() {
                       </div>
                       <div className="col-span-6 sm:col-span-3">
                         <label
-                          htmlFor="ProductStock"
+                          htmlFor="ProductAmount"
                           className="block text-sm font-medium leading-6 text-gray-900"
                         >
                           Quantità in Magazzino{" "}
@@ -294,10 +335,10 @@ export default function AddProductPage() {
                           variant="bordered"
                           type="number"
                           radius="full"
-                          name="ProductStock"
+                          name="ProductAmount"
                           placeholder="Inserisci la quantità in magazzino"
                           className="text-xs"
-                          value={String(productData.ProductStock)}
+                          value={String(productData.ProductAmount)}
                           onChange={handleChange}
                           fullWidth
                         />
@@ -305,7 +346,7 @@ export default function AddProductPage() {
 
                       <div className="col-span-6 sm:col-span-3">
                         <label
-                          htmlFor="ProductCategory"
+                          htmlFor="ProductCategoryId"
                           className="block text-sm font-medium leading-6 text-gray-900"
                         >
                           Categoria
@@ -313,13 +354,13 @@ export default function AddProductPage() {
                         <Select
                           variant="bordered"
                           radius="full"
-                          name="ProductCategory"
+                          name="ProductCategoryId"
                           placeholder="Seleziona una categoria"
                           value={productData.ProductCategoryId}
                           onChange={(e) =>
                             setProductData((prev) => ({
                               ...prev,
-                              ProductCategory: Number(e.target.value),
+                              ProductCategoryId: Number(e.target.value),
                             }))
                           }
                         >
@@ -393,30 +434,58 @@ export default function AddProductPage() {
                                 id="file-upload"
                                 type="file"
                                 onChange={handleAddImage}
+                                multiple
                                 accept="image/png, image/jpeg, image/jpg, image/gif"
                                 className="sr-only"
                               />
                             </label>
                           ) : (
-                            productData.ProductImages.map((image, index) => (
-                              <div
-                                key={index}
-                                className="border-2 rounded-lg shadow-sm flex flex-row items-center justify-between w-fit p-3"
-                              >
-                                <Checkbox
-                                  checked={selectedImages.includes(index)}
-                                  onChange={() => handleCheckboxChange(index)}
-                                />
+                            productData.ProductImages.map((image, index) =>
+                              index == 0 ? (
+                                <div
+                                  key={index}
+                                  className="border-2 rounded-lg shadow-sm w-fit"
+                                >
+                                  <div className="flex flex-row items-center justify-between  p-3">
+                                    <Checkbox
+                                      checked={selectedImages.includes(index)}
+                                      onChange={() =>
+                                        handleCheckboxChange(index)
+                                      }
+                                    />
 
-                                <Image
-                                  src={URL.createObjectURL(image)}
-                                  width={100}
-                                  height={100}
-                                  alt={`Immagine ${index + 1}`}
-                                  className="w-full object-cover rounded-none"
-                                />
-                              </div>
-                            ))
+                                    <Image
+                                      src={URL.createObjectURL(image)}
+                                      width={100}
+                                      height={100}
+                                      alt={`Immagine ${index + 1}`}
+                                      className="w-full object-cover rounded-none"
+                                    />
+                                  </div>
+                                  <div className="p-2 bg-primary text-white rounded-bl-md rounded-br-md flex justify-center uppercase text-sm">
+                                    Copertina
+                                  </div>
+                                </div>
+                              ) : (
+                                <div
+                                  key={index}
+                                  className="border-2 rounded-lg shadow-sm flex flex-row items-center justify-between w-fit p-3"
+                                >
+                                  <Checkbox
+                                    checked={selectedImages.includes(index)}
+                                    onChange={() => handleCheckboxChange(index)}
+                                  />
+
+                                  <Image
+                                    src={URL.createObjectURL(image)}
+                                    width={100}
+                                    height={100}
+                                    alt={`Immagine ${index + 1}`}
+                                    className="w-full object-cover rounded-none"
+                                  />
+                                </div>
+                              )
+                            )
                           )}
                         </div>
                       </div>
@@ -516,7 +585,7 @@ export default function AddProductPage() {
                   color="primary"
                   className="text-white"
                   radius="full"
-                  startContent={<SaveIcon />}
+                  startContent={!isSaving && <SaveIcon />}
                   isLoading={isSaving}
                   isDisabled={!checkAllDataCompiled()}
                   onClick={handleAddProduct}

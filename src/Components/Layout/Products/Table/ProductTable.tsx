@@ -12,13 +12,15 @@ import {
   Spinner,
   Pagination,
   Chip,
+  Image,
 } from "@nextui-org/react";
 import axios from "axios";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import EditRoundedIcon from "@mui/icons-material/EditRounded";
-import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import ViewProductModal from "../Other/ViewProductModal";
+import ConfirmDeleteModal from "../Other/ConfirmDeleteModal";
+import { API_URL_IMG } from "../../../../API/API";
 
 export const columns = [
   { name: "Nome Prodotto", uid: "ProductName" },
@@ -44,6 +46,7 @@ interface Product {
   Weight: number;
   Width: number;
   isFeatured: boolean;
+  FirstImage: string;
 }
 
 export default function ProductTable() {
@@ -67,23 +70,28 @@ export default function ProductTable() {
   }, [page, products]);
 
   // Funzione per eliminare una categoria
-  const deleteCategory = async (id: number) => {
+  async function DeleteProduct(ProductData: Product) {
     try {
-      await axios.delete(`/Products/DELETE/DeleteCategory/${id}`);
-      fetchCategories(); // Aggiorna la lista delle categorie dopo l'eliminazione
-    } catch (err) {
-      console.error("Errore durante l'eliminazione della categoria:", err);
+      const res = await axios.delete(`/Products/DELETE/DeleteProduct`, {
+        params: { ProductData },
+      });
+
+      if (res.status === 200) {
+        fetchProducts();
+      }
+    } catch (error) {
+      console.error("Errore nella cancellazione della categoria:", error);
     }
-  };
+  }
 
   // Funzione di ricerca delle categorie
   const handleSearch = async () => {
     setLoading(true);
     if (searchQuery === "") {
-      fetchCategories();
+      fetchProducts();
     } else {
       try {
-        const res = await axios.get(`/Products/GET/SearchCategoryByName`, {
+        const res = await axios.get(`/Products/GET/SearchProductByName`, {
           params: { searchQuery },
         });
         setProducts(res.data);
@@ -101,7 +109,7 @@ export default function ProductTable() {
   };
 
   // Funzione per recuperare tutte le categorie
-  const fetchCategories = async () => {
+  const fetchProducts = async () => {
     setLoading(true);
     try {
       const response = await axios.get("/Products/GET/GetAllProducts");
@@ -115,12 +123,23 @@ export default function ProductTable() {
   };
 
   useEffect(() => {
-    fetchCategories();
+    fetchProducts();
   }, []);
 
   // Funzione per il rendering dinamico delle celle
   const renderCell = useCallback((product: Product, columnKey: React.Key) => {
     switch (columnKey) {
+      case "ProductName":
+        return (
+          <div className="flex flex-row items-center gap-2 truncate ml-1">
+            <Image
+              width={70}
+              radius="none"
+              src={API_URL_IMG + "/uploads/ProductImages/" + product.FirstImage}
+            />
+            {product.ProductName}
+          </div>
+        );
       case "isFeatured":
         return (
           <Chip
@@ -142,10 +161,10 @@ export default function ProductTable() {
         return (
           <div className="flex justify-center items-center gap-2">
             <ViewProductModal ProductData={product} />
-            <Tooltip content="Modifica categoria">
+            <Tooltip content="Modifica prodotto">
               <Button
                 as="a"
-                href={`/products/edit-category/${product.CategoryId}`}
+                href={`/products/edit-product/${product.ProductId}`}
                 variant="light"
                 size="sm"
                 isIconOnly
@@ -153,16 +172,10 @@ export default function ProductTable() {
                 <EditRoundedIcon className="text-warning-400" />
               </Button>
             </Tooltip>
-            <Tooltip color="danger" content="Elimina categoria">
-              <Button
-                variant="light"
-                size="sm"
-                isIconOnly
-                onClick={() => deleteCategory(product.CategoryId)}
-              >
-                <DeleteRoundedIcon className="text-danger-400" />
-              </Button>
-            </Tooltip>
+            <ConfirmDeleteModal
+              ProductData={product}
+              DeleteProduct={DeleteProduct}
+            />
           </div>
         );
       default:
@@ -183,7 +196,7 @@ export default function ProductTable() {
                 variant="bordered"
                 startContent={<SearchOutlinedIcon className="text-gray-400" />}
                 className="w-full md:w-1/3"
-                placeholder="Cerca per nome categoria..."
+                placeholder="Cerca per nome prodotto..."
                 value={searchQuery}
                 onChange={handleSearchChange}
               />
