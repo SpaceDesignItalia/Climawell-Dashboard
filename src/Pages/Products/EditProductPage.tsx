@@ -1,6 +1,4 @@
 import {
-  Select,
-  SelectItem,
   Switch,
   Input,
   Button,
@@ -9,6 +7,8 @@ import {
   Checkbox,
   Tabs,
   Tab,
+  Autocomplete,
+  AutocompleteItem,
 } from "@nextui-org/react";
 import SaveIcon from "@mui/icons-material/Save";
 import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
@@ -16,6 +16,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
 import AddAPhotoRoundedIcon from "@mui/icons-material/AddAPhotoRounded";
+import StatusAlert from "../../Components/Layout/StatusAlert";
+import { useParams } from "react-router-dom";
+import { API_URL_IMG } from "../../API/API";
 
 interface Category {
   CategoryId: number;
@@ -24,7 +27,7 @@ interface Category {
 
 interface ProductData {
   ProductName: string;
-  ProductPrice: number;
+  UnitPrice: number;
   ProductAmount: number;
   ProductCategoryId: number;
   ProductDepth: number;
@@ -38,7 +41,7 @@ interface ProductData {
 
 const INITIAL_PRODUCTDATA: ProductData = {
   ProductName: "",
-  ProductPrice: 0,
+  UnitPrice: 0,
   ProductAmount: 0,
   ProductCategoryId: 0,
   ProductDepth: 0,
@@ -50,26 +53,63 @@ const INITIAL_PRODUCTDATA: ProductData = {
   ProductImages: [],
 };
 
-export default function EditProductPage() {
+interface AlertData {
+  isOpen: boolean;
+  onClose: () => void;
+  alertTitle: string;
+  alertDescription: string;
+  alertColor: "green" | "red" | "yellow";
+}
+
+const initialAlertData: AlertData = {
+  isOpen: false,
+  onClose: () => {},
+  alertTitle: "",
+  alertDescription: "",
+  alertColor: "red",
+};
+
+export default function AddProductPage() {
+  const { productId } = useParams();
   const [productData, setProductData] =
+    useState<ProductData>(INITIAL_PRODUCTDATA);
+  const [oldProductData, setOldProductData] =
     useState<ProductData>(INITIAL_PRODUCTDATA);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [localImages, setLocalImages] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<number[]>([]);
+  const [alertData, setAlertData] = useState<AlertData>(initialAlertData);
 
-  const fetchCategories = async () => {
+  useEffect(() => {
+    fetchProductData();
+    fetchCategories();
+  }, []);
+
+  async function fetchCategories() {
     try {
       const res = await axios.get("/Products/GET/GetAllCategories");
       setCategories(res.data);
     } catch (error) {
       console.error("Errore durante il caricamento delle categorie:", error);
     }
-  };
+  }
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  async function fetchProductData() {
+    try {
+      const res = await axios.get("/Products/GET/GetProductById", {
+        params: { ProductId: productId },
+      });
+
+      console.log(res.data);
+      if (res.status == 200) {
+        setOldProductData(res.data);
+        setProductData(res.data);
+      }
+    } catch (error) {
+      console.error("Errore durante il recupero del prodotto:", error);
+    }
+  }
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -86,15 +126,14 @@ export default function EditProductPage() {
   };
 
   async function handleAddProduct() {
-    console.log(productData);
-
     try {
+      setIsSaving(true);
       // Crea un nuovo oggetto FormData
       const formData = new FormData();
 
       // Aggiungi i dati del prodotto alla FormData
       formData.append("ProductName", productData.ProductName);
-      formData.append("ProductPrice", productData.ProductPrice.toString());
+      formData.append("ProductPrice", productData.UnitPrice.toString());
       formData.append("ProductAmount", productData.ProductAmount.toString());
       formData.append("CategoryId", productData.ProductCategoryId.toString());
       formData.append("ProductDepth", productData.ProductDepth.toString());
@@ -110,16 +149,48 @@ export default function EditProductPage() {
       });
 
       // Esegui la richiesta POST per aggiungere il prodotto
-      const response = await axios.post("/Products/POST/AddProduct", formData);
+      const response = await axios.post(
+        "/Products/UPDATE/UpdateProduct",
+        formData
+      );
 
       // Gestisci la risposta
       if (response.status === 200) {
-        console.log("Prodotto aggiunto con successo");
-        // Puoi fare altre azioni qui, come un redirect o una notifica
+        setAlertData({
+          isOpen: true,
+          onClose: () => setAlertData((prev) => ({ ...prev, isOpen: false })),
+          alertTitle: "Operazione completata",
+          alertDescription: "Prodotto aggiunto con successo",
+          alertColor: "green",
+        });
+        window.location.href = "/products";
       }
     } catch (error) {
-      console.error("Errore durante l'aggiunta del prodotto:", error);
-      // Gestisci eventuali errori qui
+      setIsSaving(false);
+      if (axios.isAxiosError(error)) {
+        // Controllo dell'errore specifico 409 (azienda con lo stesso nome)
+        if (error.response?.status === 409) {
+          setAlertData({
+            isOpen: true,
+            onClose: () => setAlertData((prev) => ({ ...prev, isOpen: false })),
+            alertTitle: "Conflitto durante l'operazione",
+            alertDescription:
+              "Esiste già un prodotto con questo nome. Per favore, usa un nome differente.",
+            alertColor: "yellow",
+          });
+        } else {
+          // Messaggio di errore generico in caso di altri problemi con la richiesta
+          setAlertData({
+            isOpen: true,
+            onClose: () => setAlertData((prev) => ({ ...prev, isOpen: false })),
+            alertTitle: "Errore durante l'operazione",
+            alertDescription:
+              "Si è verificato un errore durante l'aggiunta del prodotto. Per favore, riprova più tardi.",
+            alertColor: "red",
+          });
+        }
+        console.error("Errore durante l'aggiunta del prodotto:", error);
+      }
     }
   }
 
@@ -167,15 +238,27 @@ export default function EditProductPage() {
   };
 
   const checkAllDataCompiled = () => {
-    return true;
+    return (
+      productData.ProductName !== oldProductData.ProductName ||
+      productData.ProductDescription !== oldProductData.ProductDescription ||
+      productData.ProductAmount !== oldProductData.ProductAmount ||
+      productData.UnitPrice !== oldProductData.UnitPrice ||
+      productData.ProductCategoryId !== oldProductData.ProductCategoryId ||
+      productData.ProductHeight !== oldProductData.ProductHeight ||
+      productData.ProductDepth !== oldProductData.ProductDepth ||
+      productData.ProductWidth !== oldProductData.ProductWidth ||
+      productData.ProductWeight !== oldProductData.ProductWeight ||
+      productData.IsFeatured !== oldProductData.IsFeatured
+    );
   };
 
   return (
     <div className="py-10 m-0 lg:ml-72">
+      <StatusAlert AlertData={alertData} />
       <header>
         <div className="flex flex-col gap-3 px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
-            Aggiungi Prodotto
+            Modifica Prodotto
           </h1>
         </div>
       </header>
@@ -186,11 +269,11 @@ export default function EditProductPage() {
               <div className="space-y-6 bg-white py-6">
                 <div>
                   <h3 className="text-base font-semibold leading-6 text-gray-900">
-                    Aggiungi Prodotto
+                    Modifica Prodotto
                   </h3>
                   <p className="mt-1 text-sm text-gray-500 sm:w-1/3">
-                    Compila i campi sottostanti per aggiungere un nuovo prodotto
-                    al database. I campi contrassegnati con un asterisco (
+                    Compila i campi sottostanti per modificare un prodotto al
+                    database. I campi contrassegnati con un asterisco (
                     <span className="text-danger font-bold">*</span>) sono
                     obbligatori.
                   </p>
@@ -242,7 +325,8 @@ export default function EditProductPage() {
                           htmlFor="ProductDescription"
                           className="block text-sm font-medium leading-6 text-gray-900"
                         >
-                          Descrizione
+                          Descrizione{" "}
+                          <span className="text-red-600 font-bold">*</span>
                         </label>
                         <Textarea
                           variant="bordered"
@@ -271,7 +355,7 @@ export default function EditProductPage() {
                           placeholder="Inserisci il prezzo unitario"
                           className="text-xs"
                           endContent="€"
-                          value={String(productData.ProductPrice)}
+                          value={String(productData.UnitPrice)}
                           onChange={handleChange}
                           fullWidth
                         />
@@ -304,11 +388,14 @@ export default function EditProductPage() {
                         >
                           Categoria
                         </label>
-                        <Select
+                        <Autocomplete
                           variant="bordered"
                           radius="full"
                           name="ProductCategoryId"
                           placeholder="Seleziona una categoria"
+                          defaultSelectedKey={String(
+                            productData.ProductCategoryId
+                          )}
                           value={productData.ProductCategoryId}
                           onChange={(e) =>
                             setProductData((prev) => ({
@@ -318,14 +405,14 @@ export default function EditProductPage() {
                           }
                         >
                           {categories.map((category: Category) => (
-                            <SelectItem
+                            <AutocompleteItem
                               key={category.CategoryId}
                               value={category.CategoryId}
                             >
                               {category.CategoryName}
-                            </SelectItem>
+                            </AutocompleteItem>
                           ))}
-                        </Select>
+                        </Autocomplete>
                       </div>
 
                       <div className="col-span-6 flex flex-col gap-5">
@@ -393,13 +480,43 @@ export default function EditProductPage() {
                               />
                             </label>
                           ) : (
-                            productData.ProductImages.map((image, index) =>
-                              index == 0 ? (
-                                <div
-                                  key={index}
-                                  className="border-2 rounded-lg shadow-sm w-fit"
-                                >
-                                  <div className="flex flex-row items-center justify-between  p-3">
+                            productData.ProductImages.map(
+                              (image: any, index: number) =>
+                                index == 0 ? (
+                                  <div
+                                    key={index}
+                                    className="border-2 rounded-lg shadow-sm w-fit"
+                                  >
+                                    <div className="flex flex-row items-center justify-between  p-3">
+                                      <Checkbox
+                                        checked={selectedImages.includes(index)}
+                                        onChange={() =>
+                                          handleCheckboxChange(index)
+                                        }
+                                      />
+
+                                      <Image
+                                        src={
+                                          API_URL_IMG +
+                                            "/uploads/ProductImages/" +
+                                            image.ProductImageUrl ||
+                                          URL.createObjectURL(image)
+                                        }
+                                        width={100}
+                                        height={100}
+                                        alt={`Immagine ${index + 1}`}
+                                        className="w-full object-cover rounded-none"
+                                      />
+                                    </div>
+                                    <div className="p-2 bg-primary text-white rounded-bl-md rounded-br-md flex justify-center uppercase text-sm">
+                                      Copertina
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div
+                                    key={index}
+                                    className="border-2 rounded-lg shadow-sm flex flex-row items-center justify-between w-fit p-3"
+                                  >
                                     <Checkbox
                                       checked={selectedImages.includes(index)}
                                       onChange={() =>
@@ -415,29 +532,7 @@ export default function EditProductPage() {
                                       className="w-full object-cover rounded-none"
                                     />
                                   </div>
-                                  <div className="p-2 bg-primary text-white rounded-bl-md rounded-br-md flex justify-center uppercase text-sm">
-                                    Copertina
-                                  </div>
-                                </div>
-                              ) : (
-                                <div
-                                  key={index}
-                                  className="border-2 rounded-lg shadow-sm flex flex-row items-center justify-between w-fit p-3"
-                                >
-                                  <Checkbox
-                                    checked={selectedImages.includes(index)}
-                                    onChange={() => handleCheckboxChange(index)}
-                                  />
-
-                                  <Image
-                                    src={URL.createObjectURL(image)}
-                                    width={100}
-                                    height={100}
-                                    alt={`Immagine ${index + 1}`}
-                                    className="w-full object-cover rounded-none"
-                                  />
-                                </div>
-                              )
+                                )
                             )
                           )}
                         </div>
@@ -538,12 +633,12 @@ export default function EditProductPage() {
                   color="primary"
                   className="text-white"
                   radius="full"
-                  startContent={<SaveIcon />}
+                  startContent={!isSaving && <SaveIcon />}
                   isLoading={isSaving}
                   isDisabled={!checkAllDataCompiled()}
                   onClick={handleAddProduct}
                 >
-                  Salva Prodotto
+                  Salva modifiche
                 </Button>
               </div>
             </form>

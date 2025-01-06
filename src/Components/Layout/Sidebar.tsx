@@ -70,7 +70,7 @@ export default function Sidebar() {
           currentUrl,
           parentRoute: {
             href: "/products",
-            subRoutes: ["/products/add-product"],
+            subRoutes: ["/products/add-product", "/products/edit-product"],
           },
         }),
       },
@@ -82,7 +82,10 @@ export default function Sidebar() {
           currentUrl,
           parentRoute: {
             href: "/categories",
-            subRoutes: ["/categories/add-category"],
+            subRoutes: [
+              "/categories/add-category",
+              "/categories/edit-category",
+            ],
           },
         }),
       },

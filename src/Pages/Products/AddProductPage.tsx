@@ -1,6 +1,4 @@
 import {
-  Select,
-  SelectItem,
   Switch,
   Input,
   Button,
@@ -9,6 +7,8 @@ import {
   Checkbox,
   Tabs,
   Tab,
+  AutocompleteItem,
+  Autocomplete,
 } from "@nextui-org/react";
 import SaveIcon from "@mui/icons-material/Save";
 import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
@@ -213,7 +213,17 @@ export default function AddProductPage() {
   };
 
   const checkAllDataCompiled = () => {
-    return true;
+    return (
+      productData.ProductName !== "" &&
+      productData.ProductDescription !== "" &&
+      productData.ProductAmount !== 0 &&
+      productData.ProductPrice !== 0 &&
+      productData.ProductCategoryId !== 0 &&
+      productData.ProductHeight !== 0 &&
+      productData.ProductDepth !== 0 &&
+      productData.ProductWidth !== 0 &&
+      productData.ProductWeight !== 0
+    );
   };
 
   return (
@@ -289,7 +299,8 @@ export default function AddProductPage() {
                           htmlFor="ProductDescription"
                           className="block text-sm font-medium leading-6 text-gray-900"
                         >
-                          Descrizione
+                          Descrizione{" "}
+                          <span className="text-red-600 font-bold">*</span>
                         </label>
                         <Textarea
                           variant="bordered"
@@ -351,7 +362,7 @@ export default function AddProductPage() {
                         >
                           Categoria
                         </label>
-                        <Select
+                        <Autocomplete
                           variant="bordered"
                           radius="full"
                           name="ProductCategoryId"
@@ -365,14 +376,14 @@ export default function AddProductPage() {
                           }
                         >
                           {categories.map((category: Category) => (
-                            <SelectItem
+                            <AutocompleteItem
                               key={category.CategoryId}
                               value={category.CategoryId}
                             >
                               {category.CategoryName}
-                            </SelectItem>
+                            </AutocompleteItem>
                           ))}
-                        </Select>
+                        </Autocomplete>
                       </div>
 
                       <div className="col-span-6 flex flex-col gap-5">
