@@ -101,6 +101,7 @@ export default function AddProductPage() {
       ...prev,
       [name]: newValue,
     }));
+    console.log(productData);
   };
 
   async function handleAddProduct() {
@@ -367,11 +368,11 @@ export default function AddProductPage() {
                           radius="full"
                           name="ProductCategoryId"
                           placeholder="Seleziona una categoria"
-                          value={productData.ProductCategoryId}
-                          onChange={(e) =>
+                          selectedKey={String(productData.ProductCategoryId)}
+                          onSelectionChange={(e) =>
                             setProductData((prev) => ({
                               ...prev,
-                              ProductCategoryId: Number(e.target.value),
+                              ProductCategoryId: Number(e),
                             }))
                           }
                         >

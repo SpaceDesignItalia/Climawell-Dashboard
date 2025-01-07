@@ -396,11 +396,10 @@ export default function AddProductPage() {
                           defaultSelectedKey={String(
                             productData.ProductCategoryId
                           )}
-                          value={productData.ProductCategoryId}
-                          onChange={(e) =>
+                          onSelectionChange={(e) =>
                             setProductData((prev) => ({
                               ...prev,
-                              ProductCategoryId: Number(e.target.value),
+                              ProductCategoryId: Number(e),
                             }))
                           }
                         >
