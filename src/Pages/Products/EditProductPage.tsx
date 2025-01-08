@@ -19,6 +19,7 @@ import AddAPhotoRoundedIcon from "@mui/icons-material/AddAPhotoRounded";
 import StatusAlert from "../../Components/Layout/StatusAlert";
 import { useParams } from "react-router-dom";
 import { API_URL_IMG } from "../../API/API";
+import { form } from "framer-motion/client";
 
 interface Category {
   CategoryId: number;
@@ -29,25 +30,25 @@ interface ProductData {
   ProductName: string;
   UnitPrice: number;
   ProductAmount: number;
-  ProductCategoryId: number;
-  ProductDepth: number;
-  ProductHeight: number;
-  ProductWidth: number;
-  ProductWeight: number;
+  CategoryId: number;
+  Depth: number;
+  Height: number;
+  Width: number;
+  Weight: number;
   ProductDescription: string;
   IsFeatured: boolean;
-  ProductImages: Blob[];
+  ProductImages: any;
 }
 
 const INITIAL_PRODUCTDATA: ProductData = {
   ProductName: "",
   UnitPrice: 0,
   ProductAmount: 0,
-  ProductCategoryId: 0,
-  ProductDepth: 0,
-  ProductHeight: 0,
-  ProductWidth: 0,
-  ProductWeight: 0,
+  CategoryId: 0,
+  Depth: 0,
+  Height: 0,
+  Width: 0,
+  Weight: 0,
   ProductDescription: "",
   IsFeatured: false,
   ProductImages: [],
@@ -132,21 +133,30 @@ export default function AddProductPage() {
       const formData = new FormData();
 
       // Aggiungi i dati del prodotto alla FormData
+      if (productId) {
+        formData.append("ProductId", productId);
+      }
       formData.append("ProductName", productData.ProductName);
       formData.append("ProductPrice", productData.UnitPrice.toString());
       formData.append("ProductAmount", productData.ProductAmount.toString());
-      formData.append("CategoryId", productData.ProductCategoryId.toString());
-      formData.append("ProductDepth", productData.ProductDepth.toString());
-      formData.append("ProductHeight", productData.ProductHeight.toString());
-      formData.append("ProductWidth", productData.ProductWidth.toString());
-      formData.append("ProductWeight", productData.ProductWeight.toString());
+      formData.append("CategoryId", productData.CategoryId.toString());
+      formData.append("ProductDepth", productData.Depth.toString());
+      formData.append("ProductHeight", productData.Height.toString());
+      formData.append("ProductWidth", productData.Width.toString());
+      formData.append("ProductWeight", productData.Weight.toString());
       formData.append("ProductDescription", productData.ProductDescription);
       formData.append("IsFeatured", productData.IsFeatured ? "true" : "false");
+      const productImageIds = productData.ProductImages.filter(
+        (image: any) => image.ProductImageUrl
+      ).map((image: any) => image.ProductImageId);
+      formData.append("OldImages", JSON.stringify(productImageIds));
 
       // Aggiungi le immagini del prodotto (se presenti)
-      productData.ProductImages.forEach((image) => {
+      productData.ProductImages.forEach((image: any) => {
         formData.append("files", image); // Same field name for all images
       });
+
+      console.log(formData);
 
       // Esegui la richiesta POST per aggiungere il prodotto
       const response = await axios.post(
@@ -243,11 +253,11 @@ export default function AddProductPage() {
       productData.ProductDescription !== oldProductData.ProductDescription ||
       productData.ProductAmount !== oldProductData.ProductAmount ||
       productData.UnitPrice !== oldProductData.UnitPrice ||
-      productData.ProductCategoryId !== oldProductData.ProductCategoryId ||
-      productData.ProductHeight !== oldProductData.ProductHeight ||
-      productData.ProductDepth !== oldProductData.ProductDepth ||
-      productData.ProductWidth !== oldProductData.ProductWidth ||
-      productData.ProductWeight !== oldProductData.ProductWeight ||
+      productData.CategoryId !== oldProductData.CategoryId ||
+      productData.Height !== oldProductData.Height ||
+      productData.Depth !== oldProductData.Depth ||
+      productData.Width !== oldProductData.Width ||
+      productData.Weight !== oldProductData.Weight ||
       productData.IsFeatured !== oldProductData.IsFeatured
     );
   };
@@ -383,7 +393,7 @@ export default function AddProductPage() {
 
                       <div className="col-span-6 sm:col-span-3">
                         <label
-                          htmlFor="ProductCategoryId"
+                          htmlFor="CategoryId"
                           className="block text-sm font-medium leading-6 text-gray-900"
                         >
                           Categoria
@@ -391,15 +401,13 @@ export default function AddProductPage() {
                         <Autocomplete
                           variant="bordered"
                           radius="full"
-                          name="ProductCategoryId"
+                          name="CategoryId"
                           placeholder="Seleziona una categoria"
-                          defaultSelectedKey={String(
-                            productData.ProductCategoryId
-                          )}
+                          selectedKey={String(productData.CategoryId)}
                           onSelectionChange={(e) =>
                             setProductData((prev) => ({
                               ...prev,
-                              ProductCategoryId: Number(e),
+                              CategoryId: Number(e),
                             }))
                           }
                         >
@@ -496,10 +504,11 @@ export default function AddProductPage() {
 
                                       <Image
                                         src={
-                                          API_URL_IMG +
-                                            "/uploads/ProductImages/" +
-                                            image.ProductImageUrl ||
-                                          URL.createObjectURL(image)
+                                          image.ProductImageUrl
+                                            ? API_URL_IMG +
+                                              "/uploads/ProductImages/" +
+                                              image.ProductImageUrl
+                                            : URL.createObjectURL(image)
                                         }
                                         width={100}
                                         height={100}
@@ -524,7 +533,13 @@ export default function AddProductPage() {
                                     />
 
                                     <Image
-                                      src={URL.createObjectURL(image)}
+                                      src={
+                                        image.ProductImageUrl
+                                          ? API_URL_IMG +
+                                            "/uploads/ProductImages/" +
+                                            image.ProductImageUrl
+                                          : URL.createObjectURL(image)
+                                      }
                                       width={100}
                                       height={100}
                                       alt={`Immagine ${index + 1}`}
@@ -542,7 +557,7 @@ export default function AddProductPage() {
                     <div className="grid grid-cols-6 gap-6">
                       <div className="col-span-6 sm:col-span-3">
                         <label
-                          htmlFor="ProductDepth"
+                          htmlFor="Depth"
                           className="block text-sm font-medium leading-6 text-gray-900"
                         >
                           Profondità{" "}
@@ -552,18 +567,18 @@ export default function AddProductPage() {
                           variant="bordered"
                           type="number"
                           radius="full"
-                          name="ProductDepth"
+                          name="Depth"
                           placeholder="Inserisci la profondità"
                           className="text-xs"
                           endContent="cm"
-                          value={String(productData.ProductDepth)}
+                          value={String(productData.Depth)}
                           onChange={handleChange}
                           fullWidth
                         />
                       </div>
                       <div className="col-span-6 sm:col-span-3">
                         <label
-                          htmlFor="ProductHeight"
+                          htmlFor="Height"
                           className="block text-sm font-medium leading-6 text-gray-900"
                         >
                           Altezza{" "}
@@ -573,18 +588,18 @@ export default function AddProductPage() {
                           variant="bordered"
                           type="number"
                           radius="full"
-                          name="ProductHeight"
+                          name="Height"
                           placeholder="Inserisci l'altezza"
                           className="text-xs"
                           endContent="cm"
-                          value={String(productData.ProductHeight)}
+                          value={String(productData.Height)}
                           onChange={handleChange}
                           fullWidth
                         />
                       </div>
                       <div className="col-span-6 sm:col-span-3">
                         <label
-                          htmlFor="ProductWidth"
+                          htmlFor="Width"
                           className="block text-sm font-medium leading-6 text-gray-900"
                         >
                           Larghezza{" "}
@@ -594,18 +609,18 @@ export default function AddProductPage() {
                           variant="bordered"
                           type="number"
                           radius="full"
-                          name="ProductWidth"
+                          name="Width"
                           placeholder="Inserisci la larghezza"
                           className="text-xs"
                           endContent="cm"
-                          value={String(productData.ProductWidth)}
+                          value={String(productData.Width)}
                           onChange={handleChange}
                           fullWidth
                         />
                       </div>
                       <div className="col-span-6 sm:col-span-3">
                         <label
-                          htmlFor="ProductWeight"
+                          htmlFor="Weight"
                           className="block text-sm font-medium leading-6 text-gray-900"
                         >
                           Peso <span className="text-red-600 font-bold">*</span>
@@ -614,11 +629,11 @@ export default function AddProductPage() {
                           variant="bordered"
                           type="number"
                           radius="full"
-                          name="ProductWeight"
+                          name="Weight"
                           placeholder="Inserisci il peso"
                           className="text-xs"
                           endContent="Kg"
-                          value={String(productData.ProductWeight)}
+                          value={String(productData.Weight)}
                           onChange={handleChange}
                           fullWidth
                         />
@@ -635,7 +650,7 @@ export default function AddProductPage() {
                   startContent={!isSaving && <SaveIcon />}
                   isLoading={isSaving}
                   isDisabled={!checkAllDataCompiled()}
-                  onClick={handleAddProduct}
+                  onClick={() => handleAddProduct()}
                 >
                   Salva modifiche
                 </Button>
