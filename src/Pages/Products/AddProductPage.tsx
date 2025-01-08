@@ -130,6 +130,8 @@ export default function AddProductPage() {
       // Esegui la richiesta POST per aggiungere il prodotto
       const response = await axios.post("/Products/POST/AddProduct", formData);
 
+      console.log(response.status);
+
       // Gestisci la risposta
       if (response.status === 200) {
         setAlertData({

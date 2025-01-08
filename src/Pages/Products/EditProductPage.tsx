@@ -19,7 +19,6 @@ import AddAPhotoRoundedIcon from "@mui/icons-material/AddAPhotoRounded";
 import StatusAlert from "../../Components/Layout/StatusAlert";
 import { useParams } from "react-router-dom";
 import { API_URL_IMG } from "../../API/API";
-import { form } from "framer-motion/client";
 
 interface Category {
   CategoryId: number;
@@ -235,7 +234,7 @@ export default function AddProductPage() {
 
   const handleRemoveSelectedImages = (selectedIndexes: number[]) => {
     const updatedImages = productData.ProductImages.filter(
-      (_, index) => !selectedIndexes.includes(index)
+      (_: any, index: number) => !selectedIndexes.includes(index)
     );
 
     const updatedLocalImages = localImages.filter(
