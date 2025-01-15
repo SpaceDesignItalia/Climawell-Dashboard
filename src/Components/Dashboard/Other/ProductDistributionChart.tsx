@@ -3,63 +3,66 @@ import axios from "axios";
 import ApexCharts from "react-apexcharts";
 import { Spinner } from "@nextui-org/react";
 
-// Funzione per generare un colore esadecimale armonioso e distinto basato sulla stringa
+// Interfacce
+interface CategoryCount {
+  CategoryName: string;
+  Count: number;  // Ora rappresenta la somma di ProductAmount
+}
+
+interface ChartData {
+  series: number[];
+  options: any;
+}
+
+// Funzione per generare colori
 const stringToColor = (str: string): string => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
-
   const hue = hash % 360;
   const saturation = 70;
   const lightness = 55 + (hash % 20);
-
   return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 };
 
 const ProductDistributionChart: React.FC = () => {
-  const [chartData, setChartData] = useState<any>({ series: [], options: {} });
-  const [loading, setLoading] = useState<boolean>(true); // Stato di caricamento
-  const [error, setError] = useState<string | null>(null); // Stato per errore
+  const [chartData, setChartData] = useState<ChartData>({ series: [], options: {} });
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchProductDistribution();
-  }, []);
+  // Funzione per calcolare le percentuali
+  const calculatePercentages = (data: CategoryCount[]): number[] => {
+    const total = data.reduce((sum, item) => sum + item.Count, 0);
+    console.log(`Totale pezzi in magazzino: ${total}`);
+    
+    return data.map(item => {
+      const percentage = (item.Count / total) * 100;
+      console.log(`${item.CategoryName}: ${item.Count} pezzi, ${percentage.toFixed(1)}%`);
+      return Number(percentage.toFixed(1));
+    });
+  };
 
-  // Funzione per recuperare la distribuzione dei prodotti
   const fetchProductDistribution = async () => {
     try {
-      const response = await axios.get("/Products/GET/GetCategoryStats"); // Percorso API backend per ottenere la distribuzione
-      let data = response.data;
-
-      console.log("Dati ricevuti:", data); // Aggiungi un log per verificare i dati ricevuti
-
-      // Se i dati sono un singolo oggetto, trasformali in un array
-      if (!Array.isArray(data)) {
-        data = [data]; // Rende il dato un array anche se è un singolo oggetto
-      }
+      const response = await axios.get<CategoryCount[]>("/Products/GET/GetCategoryStats");
+      const data = Array.isArray(response.data) ? response.data : [response.data];
+      
+      console.log("Dati ricevuti dal server:", data);
 
       if (data && data.length > 0) {
-        const categories = data.map((item: any) => item.CategoryName);
-        const percentages = data.map(
-          (item: any) => parseFloat(item.Percentage).toFixed(2) // Arrotonda a 2 decimali
-        );
+        const categories = data.map(item => item.CategoryName);
+        const percentages = calculatePercentages(data);
+        const categoryColors = categories.map(category => stringToColor(category));
 
-        console.log("Percentuali convertite:", percentages); // Aggiungi un log per verificare le percentuali
+        console.log("Categorie:", categories);
+        console.log("Percentuali calcolate:", percentages);
 
-        // Genera i colori distinti per ogni categoria
-        const categoryColors = categories.map((category: string) =>
-          stringToColor(category)
-        );
-
-        // Aggiorna i dati del grafico
         setChartData({
-          series: percentages.map((percentage: string) =>
-            parseFloat(percentage)
-          ), // Converte in numero
+          series: percentages,
           options: {
             chart: {
-              type: "pie", // Tipo di grafico: pie (torta)
+              type: "pie",
               animations: {
                 enabled: true,
                 easing: "easeinout",
@@ -70,7 +73,9 @@ const ProductDistributionChart: React.FC = () => {
             colors: categoryColors,
             dataLabels: {
               enabled: true,
-              formatter: (val: number) => `${val}%`,
+              formatter: function(val: number) {
+                return val.toFixed(1) + '%';
+              },
               style: {
                 fontSize: "12px",
                 fontWeight: "bold",
@@ -79,7 +84,9 @@ const ProductDistributionChart: React.FC = () => {
             },
             tooltip: {
               y: {
-                formatter: (val: number) => `${val}%`,
+                formatter: function(val: number) {
+                  return val.toFixed(1) + '%';
+                },
               },
             },
             legend: {
@@ -92,6 +99,11 @@ const ProductDistributionChart: React.FC = () => {
               itemMargin: {
                 horizontal: 10,
                 vertical: 5,
+              },
+              formatter: function(seriesName: string, opts: any) {
+                const count = data[opts.seriesIndex].Count;
+                const percentage = opts.w.globals.series[opts.seriesIndex];
+                return `${seriesName} (${percentage.toFixed(1)}%)`;
               },
             },
             responsive: [
@@ -113,15 +125,16 @@ const ProductDistributionChart: React.FC = () => {
         setError("Dati insufficienti o non disponibili.");
       }
     } catch (error) {
-      console.error(
-        "Errore nel recuperare la distribuzione dei prodotti:",
-        error
-      );
+      console.error("Errore nel recuperare i dati:", error);
       setError("Errore nel recuperare i dati.");
     } finally {
-      setLoading(false); // Fine del caricamento
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchProductDistribution();
+  }, []);
 
   if (loading) {
     return (
@@ -136,9 +149,8 @@ const ProductDistributionChart: React.FC = () => {
     <div className="flex justify-center items-center p-5 border-2 rounded-lg bg-white">
       <div className="w-full max-w-2xl">
         <h2 className="text-lg font-semibold text-center mb-6">
-          Distribuzione dei Prodotti nelle Categorie
+          Distribuzione dei Pezzi in Magazzino per Categoria
         </h2>
-
         {error ? (
           <div className="text-center text-red-500">{error}</div>
         ) : (
@@ -155,3 +167,4 @@ const ProductDistributionChart: React.FC = () => {
 };
 
 export default ProductDistributionChart;
+
