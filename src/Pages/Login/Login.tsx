@@ -1,4 +1,4 @@
-import { Button, Checkbox, Input } from "@nextui-org/react";
+import { Button, Checkbox, Input } from "@heroui/react";
 import { useState } from "react";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
