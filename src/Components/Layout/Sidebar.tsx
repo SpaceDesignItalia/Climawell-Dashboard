@@ -16,7 +16,7 @@ import {
   DropdownMenu,
   DropdownTrigger,
   Skeleton,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import axios from "axios";
 import { Fragment, useEffect, useState } from "react";
 import { API_URL_IMG } from "../../API/API";

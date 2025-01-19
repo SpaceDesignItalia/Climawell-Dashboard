@@ -3,7 +3,7 @@ import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
 import FormatListBulletedOutlinedIcon from "@mui/icons-material/FormatListBulletedOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import axios from "axios";
-import { Spinner } from "@nextui-org/react";
+import { Spinner } from "@heroui/react";
 
 export default function StatsBox() {
   const [isLoading, setIsLoading] = useState<boolean>(true);

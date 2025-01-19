@@ -13,7 +13,7 @@ import {
   Pagination,
   Chip,
   Image,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import axios from "axios";
 import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";

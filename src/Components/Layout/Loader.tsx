@@ -1,4 +1,4 @@
-import { Spinner } from "@nextui-org/react";
+import { Spinner } from "@heroui/react";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 

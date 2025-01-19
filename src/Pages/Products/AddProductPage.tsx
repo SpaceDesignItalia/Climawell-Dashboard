@@ -9,7 +9,7 @@ import {
   Tab,
   AutocompleteItem,
   Autocomplete,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import SaveIcon from "@mui/icons-material/Save";
 import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
 import { useEffect, useState } from "react";

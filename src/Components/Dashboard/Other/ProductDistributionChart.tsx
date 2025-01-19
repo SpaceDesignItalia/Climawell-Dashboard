@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ApexCharts from "react-apexcharts";
-import { Spinner } from "@nextui-org/react";
+import { Spinner } from "@heroui/react";
 
 // Interfacce
 interface CategoryCount {

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Spinner } from "@nextui-org/react";
+import { Spinner } from "@heroui/react";
 
 export default function WarehouseValueBox() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
