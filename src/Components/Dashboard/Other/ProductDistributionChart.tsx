@@ -6,7 +6,7 @@ import { Spinner } from "@heroui/react";
 // Interfacce
 interface CategoryCount {
   CategoryName: string;
-  Count: number;  // Ora rappresenta la somma di ProductAmount
+  Count: number;
 }
 
 interface ChartData {
@@ -30,85 +30,92 @@ const ProductDistributionChart: React.FC = () => {
   const [chartData, setChartData] = useState<ChartData>({ series: [], options: {} });
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // Stato per gestire la modale
 
-  // Funzione per calcolare le percentuali
-  const calculatePercentages = (data: CategoryCount[]): number[] => {
+  // Funzione per calcolare le percentuali e raggruppare le categorie minori
+  const calculatePercentagesAndGroup = (data: CategoryCount[]): { percentages: number[]; categories: string[] } => {
     const total = data.reduce((sum, item) => sum + item.Count, 0);
-    console.log(`Totale pezzi in magazzino: ${total}`);
-    
-    return data.map(item => {
-      const percentage = (item.Count / total) * 100;
-      console.log(`${item.CategoryName}: ${item.Count} pezzi, ${percentage.toFixed(1)}%`);
-      return Number(percentage.toFixed(1));
-    });
+
+    const percentages: number[] = [];
+    const categories: string[] = [];
+    let otherPercentage = 0;
+
+    data
+      .sort((a, b) => b.Count - a.Count) // Ordina per quantità decrescente
+      .forEach((item) => {
+        const percentage = (item.Count / total) * 100;
+        if (percentages.length < 10 && percentage >= 2) {
+          percentages.push(Number(percentage.toFixed(1)));
+          categories.push(item.CategoryName);
+        } else {
+          otherPercentage += percentage;
+        }
+      });
+
+    if (otherPercentage > 0) {
+      percentages.push(Number(otherPercentage.toFixed(1)));
+      categories.push("Altre categorie");
+    }
+
+    return { percentages, categories };
   };
 
   const fetchProductDistribution = async () => {
     try {
       const response = await axios.get<CategoryCount[]>("/Products/GET/GetCategoryStats");
       const data = Array.isArray(response.data) ? response.data : [response.data];
-      
-      console.log("Dati ricevuti dal server:", data);
 
       if (data && data.length > 0) {
-        const categories = data.map(item => item.CategoryName);
-        const percentages = calculatePercentages(data);
-        const categoryColors = categories.map(category => stringToColor(category));
-
-        console.log("Categorie:", categories);
-        console.log("Percentuali calcolate:", percentages);
+        const { percentages, categories } = calculatePercentagesAndGroup(data);
+        const categoryColors = categories.map((category) => stringToColor(category));
 
         setChartData({
           series: percentages,
           options: {
             chart: {
-              type: "pie",
+              type: "donut",
               animations: {
                 enabled: true,
                 easing: "easeinout",
-                speed: 1000,
+                speed: 800,
+              },
+              toolbar: {
+                show: false,
               },
             },
             labels: categories,
             colors: categoryColors,
             dataLabels: {
               enabled: true,
-              formatter: function(val: number) {
-                return val.toFixed(1) + '%';
+              formatter: (val: number, opts: any) => {
+                const name = opts.w.globals.labels[opts.seriesIndex];
+                return name.length > 10 ? name.slice(0, 10) + "..." : name;
               },
               style: {
-                fontSize: "12px",
+                fontSize: "14px",
                 fontWeight: "bold",
-                colors: ["#fff"],
+                colors: ["#000"],
               },
             },
             tooltip: {
               y: {
-                formatter: function(val: number) {
-                  return val.toFixed(1) + '%';
-                },
+                formatter: (val: number) => val.toFixed(1) + "%",
               },
             },
             legend: {
-              position: "right",
-              floating: false,
-              fontSize: "14px",
+              position: "bottom",
+              fontSize: "12px",
               labels: {
                 colors: "#333",
               },
-              itemMargin: {
-                horizontal: 10,
-                vertical: 5,
-              },
-              formatter: function(seriesName: string, opts: any) {
-                const count = data[opts.seriesIndex].Count;
+              formatter: (seriesName: string, opts: any) => {
                 const percentage = opts.w.globals.series[opts.seriesIndex];
                 return `${seriesName} (${percentage.toFixed(1)}%)`;
               },
             },
             responsive: [
               {
-                breakpoint: 480,
+                breakpoint: 768,
                 options: {
                   chart: {
                     width: "100%",
@@ -138,28 +145,53 @@ const ProductDistributionChart: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center p-5 border-2 rounded-lg bg-white">
+      <div className="flex justify-center items-center p-5 border-2 rounded-lg bg-gray-100">
         <Spinner size="sm" />
-        <span className="ml-2">Caricamento dei dati...</span>
+        <span className="ml-2 text-gray-700">Caricamento dei dati...</span>
       </div>
     );
   }
 
   return (
-    <div className="flex justify-center items-center p-5 border-2 rounded-lg bg-white">
-      <div className="w-full max-w-2xl">
-        <h2 className="text-lg font-semibold text-center mb-6">
+    <div className="flex justify-center items-center p-5 border-2 rounded-lg">
+      <div className="w-full max-w-3xl">
+        <h2 className="text-xl font-bold text-center text-gray-800 mb-6">
           Distribuzione dei Pezzi in Magazzino per Categoria
         </h2>
         {error ? (
           <div className="text-center text-red-500">{error}</div>
         ) : (
-          <ApexCharts
-            options={chartData.options}
-            series={chartData.series}
-            type="pie"
-            height={350}
-          />
+          <>
+            {/* Preview del grafico */}
+            <div className="border border-gray-300 rounded-lg p-4 shadow-md bg-white">
+              <ApexCharts options={chartData.options} series={chartData.series} type="donut" height={300} />
+            </div>
+
+            {/* Pulsante per aprire la modale */}
+            <div className="flex justify-center mt-6">
+              <button
+                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg text-lg transition-transform transform hover:scale-105"
+                onClick={() => setIsModalOpen(true)}
+              >
+                Apri Grafico a Schermo Intero
+              </button>
+            </div>
+
+            {/* Modale */}
+            {isModalOpen && (
+              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70">
+                <div className="bg-white rounded-lg shadow-2xl w-11/12 max-w-5xl p-6 relative">
+                  <button
+                    className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-full h-10 w-10 flex items-center justify-center text-xl"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    &times;
+                  </button>
+                  <ApexCharts options={chartData.options} series={chartData.series} type="donut" height={600} />
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -167,4 +199,3 @@ const ProductDistributionChart: React.FC = () => {
 };
 
 export default ProductDistributionChart;
-
