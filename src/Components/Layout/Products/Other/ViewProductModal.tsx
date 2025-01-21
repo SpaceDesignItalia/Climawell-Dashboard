@@ -180,8 +180,7 @@ export default function ViewProductModal({
                           height={400}
                           alt={image.ProductImageUrl}
                           src={
-                            API_URL_IMG +
-                            "/uploads/ProductImages/" +
+                        
                             image.ProductImageUrl
                           }
                           className="rounded-lg w-auto border-2"

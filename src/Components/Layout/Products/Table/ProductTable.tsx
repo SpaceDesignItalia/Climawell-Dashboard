@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react"
 import {
   Table,
   TableHeader,
@@ -13,14 +13,14 @@ import {
   Pagination,
   Chip,
   Image,
-} from "@heroui/react";
-import axios from "axios";
-import AddOutlinedIcon from "@mui/icons-material/AddOutlined";
-import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
-import EditRoundedIcon from "@mui/icons-material/EditRounded";
-import ViewProductModal from "../Other/ViewProductModal";
-import ConfirmDeleteModal from "../Other/ConfirmDeleteModal";
-import { API_URL_IMG } from "../../../../API/API";
+} from "@heroui/react"
+import axios from "axios"
+import AddOutlinedIcon from "@mui/icons-material/AddOutlined"
+import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined"
+import EditRoundedIcon from "@mui/icons-material/EditRounded"
+import ViewProductModal from "../Other/ViewProductModal"
+import ConfirmDeleteModal from "../Other/ConfirmDeleteModal"
+import { API_IMAGE_URL } from "../../../../API/API"
 
 export const columns = [
   { name: "Nome Prodotto", uid: "ProductName" },
@@ -29,159 +29,152 @@ export const columns = [
   { name: "Categoria", uid: "CategoryName" },
   { name: "Prezzo", uid: "UnitPrice" },
   { name: "Azioni", uid: "actions" },
-];
+]
 
 interface Product {
-  CategoryId: number;
-  CategoryName: string;
-  Depth: number;
-  Height: number;
-  ProductAmount: number;
-  ProductDescription: string;
-  ProductId: number;
-  ProductImageId: number;
-  ProductImageUrl: string;
-  ProductName: string;
-  UnitPrice: number;
-  Weight: number;
-  Width: number;
-  isFeatured: boolean;
-  FirstImage: string;
+  CategoryId: number
+  CategoryName: string
+  Depth: number
+  Height: number
+  ProductAmount: number
+  ProductDescription: string
+  ProductId: number
+  ProductImageId: number
+  ProductImageUrl: string
+  ProductName: string
+  UnitPrice: number
+  Weight: number
+  Width: number
+  isFeatured: boolean
+  FirstImage: string
 }
 
 export default function ProductTable() {
   // Stato per le categorie
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([])
   // Stato per la query di ricerca
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("")
   // Stato per il loading
-  const [isLoading, setLoading] = useState<boolean>(true);
+  const [isLoading, setLoading] = useState<boolean>(true)
 
-  const [page, setPage] = React.useState(1);
-  const rowsPerPage = 15;
+  const [page, setPage] = React.useState(1)
+  const rowsPerPage = 15
 
-  const pages = Math.ceil(products.length / rowsPerPage);
+  const pages = Math.ceil(products.length / rowsPerPage)
 
   const items = React.useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
+    const start = (page - 1) * rowsPerPage
+    const end = start + rowsPerPage
 
-    return products.slice(start, end);
-  }, [page, products]);
+    return products.slice(start, end)
+  }, [page, products])
 
   // Funzione per eliminare una categoria
   async function DeleteProduct(ProductData: Product) {
     try {
       const res = await axios.delete(`/Products/DELETE/DeleteProduct`, {
         params: { ProductData },
-      });
+      })
 
       if (res.status === 200) {
-        fetchProducts();
+        fetchProducts()
       }
     } catch (error) {
-      console.error("Errore nella cancellazione della categoria:", error);
+      console.error("Errore nella cancellazione della categoria:", error)
     }
   }
 
   // Funzione di ricerca delle categorie
   const handleSearch = async () => {
-    setLoading(true);
+    setLoading(true)
     if (searchQuery === "") {
-      fetchProducts();
+      fetchProducts()
     } else {
       try {
         const res = await axios.get(`/Products/GET/SearchProductByName`, {
           params: { searchQuery },
-        });
-        setProducts(res.data);
+        })
+        setProducts(res.data)
       } catch (err) {
-        console.error("Errore durante la ricerca della categoria:", err);
+        console.error("Errore durante la ricerca della categoria:", err)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
     }
-  };
+  }
 
   // Gestione del cambiamento del campo di ricerca
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
+    setSearchQuery(e.target.value)
+  }
 
   // Funzione per recuperare tutte le categorie
   const fetchProducts = async () => {
-    setLoading(true);
+    setLoading(true)
     try {
-      const response = await axios.get("/Products/GET/GetAllProducts");
-      console.log(response.data);
-      setProducts(response.data);
+      const response = await axios.get("/Products/GET/GetAllProducts")
+      console.log(response.data)
+      setProducts(response.data)
     } catch (error) {
-      console.error("Errore durante il fetch delle categorie:", error);
+      console.error("Errore durante il fetch delle categorie:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    fetchProducts()
+  }, [])
 
   // Funzione per il rendering dinamico delle celle
   const renderCell = useCallback((product: Product, columnKey: React.Key) => {
     switch (columnKey) {
       case "ProductName":
         return (
-          <div className="flex flex-row items-center gap-2 truncate ml-1">
+          <div className="flex flex-row items-center gap-2 w-40">
             <Image
-              width={70}
-              radius="none"
-              src={API_URL_IMG + "/uploads/ProductImages/" + product.FirstImage}
+              width={50}
+              height={50}
+              radius="sm"
+              src={
+                product.FirstImage.includes("https://") ? product.FirstImage : `${API_IMAGE_URL}${product.FirstImage}`
+              }
+              alt={product.ProductName}
+              className="object-cover"
             />
-            {product.ProductName}
+            <Tooltip content={product.ProductName}>
+              <span className="truncate">{product.ProductName}</span>
+            </Tooltip>
           </div>
-        );
+        )
       case "isFeatured":
         return (
-          <Chip
-            color={product.isFeatured ? "success" : "danger"}
-            variant="flat"
-          >
-            <div className="font-semibold">
-              {product.isFeatured ? "In evidenza" : "Non in evidenza"}
-            </div>
+          <Chip color={product.isFeatured ? "success" : "danger"} variant="flat">
+            <div className="font-semibold">{product.isFeatured ? "In evidenza" : "Non in evidenza"}</div>
           </Chip>
-        );
+        )
       case "CategoryName":
-        return product.CategoryName;
+        return product.CategoryName
       case "ProductAmount":
-        return <div>{product.ProductAmount} unità</div>;
+        return <div>{product.ProductAmount} unità</div>
       case "UnitPrice":
-        return <div>{product.UnitPrice} € </div>;
+        return <div>{product.UnitPrice} € </div>
       case "actions":
         return (
           <div className="flex justify-center items-center gap-2">
             <ViewProductModal ProductData={product} />
             <Tooltip content="Modifica prodotto">
-              <Button
-                as="a"
-                href={`/products/edit-product/${product.ProductId}`}
-                variant="light"
-                size="sm"
-                isIconOnly
-              >
+              <Button as="a" href={`/products/edit-product/${product.ProductId}`} variant="light" size="sm" isIconOnly>
                 <EditRoundedIcon className="text-warning-400" />
               </Button>
             </Tooltip>
-            <ConfirmDeleteModal
-              ProductData={product}
-              DeleteProduct={DeleteProduct}
-            />
+            <ConfirmDeleteModal ProductData={product} DeleteProduct={DeleteProduct} />
           </div>
-        );
+        )
       default:
-        return product[columnKey as keyof Product];
+        return product[columnKey as keyof Product]
     }
-  }, []);
+  }, [])
 
   return (
     <div className="relative">
@@ -228,10 +221,9 @@ export default function ProductTable() {
               isCompact
               showControls
               showShadow
-              radius="full"
               color="primary"
               page={page}
-              total={pages || 1}
+              total={pages}
               onChange={(page) => setPage(page)}
             />
           </div>
@@ -242,27 +234,22 @@ export default function ProductTable() {
             <TableColumn
               key={column.uid}
               align={column.uid === "actions" ? "center" : "start"}
+              className={column.uid === "ProductName" ? "w-40" : ""}
             >
               {column.name}
             </TableColumn>
           )}
         </TableHeader>
 
-        {/* Usa isLoading in TableBody */}
-        <TableBody
-          items={items}
-          isLoading={isLoading}
-          loadingContent={<Spinner color="primary" />}
-        >
+        <TableBody items={items} isLoading={isLoading} loadingContent={<Spinner color="primary" />}>
           {(item: Product) => (
-            <TableRow key={item.CategoryId}>
-              {(columnKey) => (
-                <TableCell>{renderCell(item, columnKey)}</TableCell>
-              )}
+            <TableRow key={item.ProductId}>
+              {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
             </TableRow>
           )}
         </TableBody>
       </Table>
     </div>
-  );
+  )
 }
+

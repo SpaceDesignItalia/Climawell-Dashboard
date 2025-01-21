@@ -9,34 +9,34 @@ import {
   Tab,
   Autocomplete,
   AutocompleteItem,
-} from "@heroui/react";
-import SaveIcon from "@mui/icons-material/Save";
-import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
-import AddAPhotoRoundedIcon from "@mui/icons-material/AddAPhotoRounded";
-import StatusAlert from "../../Components/Layout/StatusAlert";
-import { useParams } from "react-router-dom";
-import { API_URL_IMG } from "../../API/API";
+} from "@heroui/react"
+import SaveIcon from "@mui/icons-material/Save"
+import AddPhotoAlternateOutlinedIcon from "@mui/icons-material/AddPhotoAlternateOutlined"
+import { useEffect, useState } from "react"
+import axios from "axios"
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded"
+import AddAPhotoRoundedIcon from "@mui/icons-material/AddAPhotoRounded"
+import StatusAlert from "../../Components/Layout/StatusAlert"
+import { useParams } from "react-router-dom"
+import { API_IMAGE_URL } from "../../API/API"
 
 interface Category {
-  CategoryId: number;
-  CategoryName: string;
+  CategoryId: number
+  CategoryName: string
 }
 
 interface ProductData {
-  ProductName: string;
-  UnitPrice: number;
-  ProductAmount: number;
-  CategoryId: number;
-  Depth: number;
-  Height: number;
-  Width: number;
-  Weight: number;
-  ProductDescription: string;
-  IsFeatured: boolean;
-  ProductImages: any;
+  ProductName: string
+  UnitPrice: number
+  ProductAmount: number
+  CategoryId: number
+  Depth: number
+  Height: number
+  Width: number
+  Weight: number
+  ProductDescription: string
+  IsFeatured: boolean
+  ProductImages: any
 }
 
 const INITIAL_PRODUCTDATA: ProductData = {
@@ -51,14 +51,14 @@ const INITIAL_PRODUCTDATA: ProductData = {
   ProductDescription: "",
   IsFeatured: false,
   ProductImages: [],
-};
+}
 
 interface AlertData {
-  isOpen: boolean;
-  onClose: () => void;
-  alertTitle: string;
-  alertDescription: string;
-  alertColor: "green" | "red" | "yellow";
+  isOpen: boolean
+  onClose: () => void
+  alertTitle: string
+  alertDescription: string
+  alertColor: "green" | "red" | "yellow"
 }
 
 const initialAlertData: AlertData = {
@@ -67,31 +67,29 @@ const initialAlertData: AlertData = {
   alertTitle: "",
   alertDescription: "",
   alertColor: "red",
-};
+}
 
 export default function AddProductPage() {
-  const { productId } = useParams();
-  const [productData, setProductData] =
-    useState<ProductData>(INITIAL_PRODUCTDATA);
-  const [oldProductData, setOldProductData] =
-    useState<ProductData>(INITIAL_PRODUCTDATA);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
-  const [localImages, setLocalImages] = useState<string[]>([]);
-  const [selectedImages, setSelectedImages] = useState<number[]>([]);
-  const [alertData, setAlertData] = useState<AlertData>(initialAlertData);
+  const { productId } = useParams()
+  const [productData, setProductData] = useState<ProductData>(INITIAL_PRODUCTDATA)
+  const [oldProductData, setOldProductData] = useState<ProductData>(INITIAL_PRODUCTDATA)
+  const [categories, setCategories] = useState<Category[]>([])
+  const [isSaving, setIsSaving] = useState(false)
+  const [localImages, setLocalImages] = useState<string[]>([])
+  const [selectedImages, setSelectedImages] = useState<number[]>([])
+  const [alertData, setAlertData] = useState<AlertData>(initialAlertData)
 
   useEffect(() => {
-    fetchProductData();
-    fetchCategories();
-  }, []);
+    fetchProductData()
+    fetchCategories()
+  }, [])
 
   async function fetchCategories() {
     try {
-      const res = await axios.get("/Products/GET/GetAllCategories");
-      setCategories(res.data);
+      const res = await axios.get("/Products/GET/GetAllCategories")
+      setCategories(res.data)
     } catch (error) {
-      console.error("Errore durante il caricamento delle categorie:", error);
+      console.error("Errore durante il caricamento delle categorie:", error)
     }
   }
 
@@ -99,69 +97,64 @@ export default function AddProductPage() {
     try {
       const res = await axios.get("/Products/GET/GetProductById", {
         params: { ProductId: productId },
-      });
+      })
 
-      console.log(res.data);
+      console.log(res.data)
       if (res.status == 200) {
-        setOldProductData(res.data);
-        setProductData(res.data);
+        setOldProductData(res.data)
+        setProductData(res.data)
       }
     } catch (error) {
-      console.error("Errore durante il recupero del prodotto:", error);
+      console.error("Errore durante il recupero del prodotto:", error)
     }
   }
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value, type } = e.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target
 
     // Per i campi numerici, convertiamo il valore in numero
-    const newValue = type === "number" ? parseFloat(value) : value;
+    const newValue = type === "number" ? Number.parseFloat(value) : value
 
     setProductData((prev) => ({
       ...prev,
       [name]: newValue,
-    }));
-  };
+    }))
+  }
 
   async function handleAddProduct() {
     try {
-      setIsSaving(true);
+      setIsSaving(true)
       // Crea un nuovo oggetto FormData
-      const formData = new FormData();
+      const formData = new FormData()
 
       // Aggiungi i dati del prodotto alla FormData
       if (productId) {
-        formData.append("ProductId", productId);
+        formData.append("ProductId", productId)
       }
-      formData.append("ProductName", productData.ProductName);
-      formData.append("ProductPrice", productData.UnitPrice.toString());
-      formData.append("ProductAmount", productData.ProductAmount.toString());
-      formData.append("CategoryId", productData.CategoryId.toString());
-      formData.append("ProductDepth", productData.Depth.toString());
-      formData.append("ProductHeight", productData.Height.toString());
-      formData.append("ProductWidth", productData.Width.toString());
-      formData.append("ProductWeight", productData.Weight.toString());
-      formData.append("ProductDescription", productData.ProductDescription);
-      formData.append("IsFeatured", productData.IsFeatured ? "true" : "false");
-      const productImageIds = productData.ProductImages.filter(
-        (image: any) => image.ProductImageUrl
-      ).map((image: any) => image.ProductImageId);
-      formData.append("OldImages", JSON.stringify(productImageIds));
+      formData.append("ProductName", productData.ProductName)
+      formData.append("ProductPrice", productData.UnitPrice.toString())
+      formData.append("ProductAmount", productData.ProductAmount.toString())
+      formData.append("CategoryId", productData.CategoryId.toString())
+      formData.append("ProductDepth", productData.Depth.toString())
+      formData.append("ProductHeight", productData.Height.toString())
+      formData.append("ProductWidth", productData.Width.toString())
+      formData.append("ProductWeight", productData.Weight.toString())
+      formData.append("ProductDescription", productData.ProductDescription)
+      formData.append("IsFeatured", productData.IsFeatured ? "true" : "false")
+      const productImageIds = productData.ProductImages.filter((image: any) => image.ProductImageUrl).map(
+        (image: any) => image.ProductImageId,
+      )
+      formData.append("OldImages", JSON.stringify(productImageIds))
 
       // Aggiungi le immagini del prodotto (se presenti)
       productData.ProductImages.forEach((image: any) => {
-        formData.append("files", image); // Same field name for all images
-      });
+        formData.append("files", image) // Same field name for all images
+      })
 
-      console.log(formData);
+      console.log(formData)
 
       // Esegui la richiesta POST per aggiungere il prodotto
-      const response = await axios.post(
-        "/Products/UPDATE/UpdateProduct",
-        formData
-      );
+      const response = await axios.post("/Products/UPDATE/UpdateProduct", formData)
 
       // Gestisci la risposta
       if (response.status === 200) {
@@ -171,11 +164,11 @@ export default function AddProductPage() {
           alertTitle: "Operazione completata",
           alertDescription: "Prodotto aggiunto con successo",
           alertColor: "green",
-        });
-        window.location.href = "/products";
+        })
+        window.location.href = "/products"
       }
     } catch (error) {
-      setIsSaving(false);
+      setIsSaving(false)
       if (axios.isAxiosError(error)) {
         // Controllo dell'errore specifico 409 (azienda con lo stesso nome)
         if (error.response?.status === 409) {
@@ -183,10 +176,9 @@ export default function AddProductPage() {
             isOpen: true,
             onClose: () => setAlertData((prev) => ({ ...prev, isOpen: false })),
             alertTitle: "Conflitto durante l'operazione",
-            alertDescription:
-              "Esiste già un prodotto con questo nome. Per favore, usa un nome differente.",
+            alertDescription: "Esiste già un prodotto con questo nome. Per favore, usa un nome differente.",
             alertColor: "yellow",
-          });
+          })
         } else {
           // Messaggio di errore generico in caso di altri problemi con la richiesta
           setAlertData({
@@ -196,55 +188,45 @@ export default function AddProductPage() {
             alertDescription:
               "Si è verificato un errore durante l'aggiunta del prodotto. Per favore, riprova più tardi.",
             alertColor: "red",
-          });
+          })
         }
-        console.error("Errore durante l'aggiunta del prodotto:", error);
+        console.error("Errore durante l'aggiunta del prodotto:", error)
       }
     }
   }
 
   const handleAddImage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
+    const files = event.target.files
     if (files) {
-      const allowedExtensions = ["image/jpeg", "image/png"];
-      const selectedImages = Array.from(files).filter((file) =>
-        allowedExtensions.includes(file.type)
-      );
+      const allowedExtensions = ["image/jpeg", "image/png"]
+      const selectedImages = Array.from(files).filter((file) => allowedExtensions.includes(file.type))
 
       setProductData((prev) => ({
         ...prev,
         ProductImages: [...prev.ProductImages, ...selectedImages],
-      }));
+      }))
 
-      const imagePreviews = selectedImages.map((file) =>
-        URL.createObjectURL(file)
-      );
+      const imagePreviews = selectedImages.map((file) => URL.createObjectURL(file))
 
-      setLocalImages((prev) => [...prev, ...imagePreviews]);
+      setLocalImages((prev) => [...prev, ...imagePreviews])
     }
-  };
+  }
 
   const handleCheckboxChange = (index: number) => {
     setSelectedImages((prevSelected) =>
-      prevSelected.includes(index)
-        ? prevSelected.filter((i) => i !== index)
-        : [...prevSelected, index]
-    );
-  };
+      prevSelected.includes(index) ? prevSelected.filter((i) => i !== index) : [...prevSelected, index],
+    )
+  }
 
   const handleRemoveSelectedImages = (selectedIndexes: number[]) => {
-    const updatedImages = productData.ProductImages.filter(
-      (_: any, index: number) => !selectedIndexes.includes(index)
-    );
+    const updatedImages = productData.ProductImages.filter((_: any, index: number) => !selectedIndexes.includes(index))
 
-    const updatedLocalImages = localImages.filter(
-      (_, index) => !selectedIndexes.includes(index)
-    );
+    const updatedLocalImages = localImages.filter((_, index) => !selectedIndexes.includes(index))
 
-    setProductData((prev) => ({ ...prev, ProductImages: updatedImages }));
-    setLocalImages(updatedLocalImages);
-    setSelectedImages([]);
-  };
+    setProductData((prev) => ({ ...prev, ProductImages: updatedImages }))
+    setLocalImages(updatedLocalImages)
+    setSelectedImages([])
+  }
 
   const checkAllDataCompiled = () => {
     return (
@@ -258,17 +240,15 @@ export default function AddProductPage() {
       productData.Width !== oldProductData.Width ||
       productData.Weight !== oldProductData.Weight ||
       productData.IsFeatured !== oldProductData.IsFeatured
-    );
-  };
+    )
+  }
 
   return (
     <div className="py-10 m-0 lg:ml-72">
       <StatusAlert AlertData={alertData} />
       <header>
         <div className="flex flex-col gap-3 px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
-            Modifica Prodotto
-          </h1>
+          <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">Modifica Prodotto</h1>
         </div>
       </header>
       <main className="px-4 sm:px-6 lg:px-8">
@@ -277,26 +257,18 @@ export default function AddProductPage() {
             <form>
               <div className="space-y-6 bg-white py-6">
                 <div>
-                  <h3 className="text-base font-semibold leading-6 text-gray-900">
-                    Modifica Prodotto
-                  </h3>
+                  <h3 className="text-base font-semibold leading-6 text-gray-900">Modifica Prodotto</h3>
                   <p className="mt-1 text-sm text-gray-500 sm:w-1/3">
-                    Compila i campi sottostanti per modificare un prodotto al
-                    database. I campi contrassegnati con un asterisco (
-                    <span className="text-danger font-bold">*</span>) sono
-                    obbligatori.
+                    Compila i campi sottostanti per modificare un prodotto al database. I campi contrassegnati con un
+                    asterisco (<span className="text-danger font-bold">*</span>) sono obbligatori.
                   </p>
                 </div>
                 <Tabs aria-label="Options" variant="underlined">
                   <Tab key="descrizione" title="Descrizione">
                     <div className="grid grid-cols-6 gap-6">
                       <div className="col-span-6 sm:col-span-4">
-                        <label
-                          htmlFor="ProductName"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Nome Prodotto{" "}
-                          <span className="text-red-600 font-bold">*</span>
+                        <label htmlFor="ProductName" className="block text-sm font-medium leading-6 text-gray-900">
+                          Nome Prodotto <span className="text-red-600 font-bold">*</span>
                         </label>
                         <Input
                           variant="bordered"
@@ -311,12 +283,8 @@ export default function AddProductPage() {
                       </div>
 
                       <div className="col-span-6 sm:col-span-2 flex flex-col justify-center">
-                        <label
-                          htmlFor="IsFeatured"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Prodotto in evidenza{" "}
-                          <span className="text-red-600 font-bold">*</span>
+                        <label htmlFor="IsFeatured" className="block text-sm font-medium leading-6 text-gray-900">
+                          Prodotto in evidenza <span className="text-red-600 font-bold">*</span>
                         </label>
                         <Switch
                           isSelected={Boolean(productData.IsFeatured)}
@@ -334,8 +302,7 @@ export default function AddProductPage() {
                           htmlFor="ProductDescription"
                           className="block text-sm font-medium leading-6 text-gray-900"
                         >
-                          Descrizione{" "}
-                          <span className="text-red-600 font-bold">*</span>
+                          Descrizione <span className="text-red-600 font-bold">*</span>
                         </label>
                         <Textarea
                           variant="bordered"
@@ -349,12 +316,8 @@ export default function AddProductPage() {
                       </div>
 
                       <div className="col-span-6 sm:col-span-3">
-                        <label
-                          htmlFor="ProductPrice"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Prezzo{" "}
-                          <span className="text-red-600 font-bold">*</span>
+                        <label htmlFor="ProductPrice" className="block text-sm font-medium leading-6 text-gray-900">
+                          Prezzo <span className="text-red-600 font-bold">*</span>
                         </label>
                         <Input
                           variant="bordered"
@@ -370,12 +333,8 @@ export default function AddProductPage() {
                         />
                       </div>
                       <div className="col-span-6 sm:col-span-3">
-                        <label
-                          htmlFor="ProductAmount"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Quantità in Magazzino{" "}
-                          <span className="text-red-600 font-bold">*</span>
+                        <label htmlFor="ProductAmount" className="block text-sm font-medium leading-6 text-gray-900">
+                          Quantità in Magazzino <span className="text-red-600 font-bold">*</span>
                         </label>
                         <Input
                           variant="bordered"
@@ -391,10 +350,7 @@ export default function AddProductPage() {
                       </div>
 
                       <div className="col-span-6 sm:col-span-3">
-                        <label
-                          htmlFor="CategoryId"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
+                        <label htmlFor="CategoryId" className="block text-sm font-medium leading-6 text-gray-900">
                           Categoria
                         </label>
                         <Autocomplete
@@ -411,10 +367,7 @@ export default function AddProductPage() {
                           }
                         >
                           {categories.map((category: Category) => (
-                            <AutocompleteItem
-                              key={category.CategoryId}
-                              value={category.CategoryId}
-                            >
+                            <AutocompleteItem key={category.CategoryId} value={category.CategoryId}>
                               {category.CategoryName}
                             </AutocompleteItem>
                           ))}
@@ -450,9 +403,7 @@ export default function AddProductPage() {
                             {selectedImages.length > 0 && (
                               <Button
                                 type="button"
-                                onClick={() =>
-                                  handleRemoveSelectedImages(selectedImages)
-                                }
+                                onClick={() => handleRemoveSelectedImages(selectedImages)}
                                 startContent={<DeleteOutlineRoundedIcon />}
                                 className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
                               >
@@ -470,12 +421,8 @@ export default function AddProductPage() {
                               className="flex flex-col items-center justify-center w-full p-12 border-2 border-dashed rounded-lg border-gray-300 hover:border-gray-400 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 cursor-pointer"
                             >
                               <AddAPhotoRoundedIcon sx={{ fontSize: 40 }} />
-                              <span className="mt-2 block text-sm font-semibold text-gray-900">
-                                Carica un file
-                              </span>
-                              <span className="block text-sm text-gray-500">
-                                PNG, JPG, GIF
-                              </span>
+                              <span className="mt-2 block text-sm font-semibold text-gray-900">Carica un file</span>
+                              <span className="block text-sm text-gray-500">PNG, JPG, GIF</span>
                               <input
                                 id="file-upload"
                                 type="file"
@@ -486,67 +433,39 @@ export default function AddProductPage() {
                               />
                             </label>
                           ) : (
-                            productData.ProductImages.map(
-                              (image: any, index: number) =>
-                                index == 0 ? (
-                                  <div
-                                    key={index}
-                                    className="border-2 rounded-lg shadow-sm w-fit"
-                                  >
-                                    <div className="flex flex-row items-center justify-between  p-3">
-                                      <Checkbox
-                                        checked={selectedImages.includes(index)}
-                                        onChange={() =>
-                                          handleCheckboxChange(index)
-                                        }
-                                      />
-
-                                      <Image
-                                        src={
-                                          image.ProductImageUrl
-                                            ? API_URL_IMG +
-                                              "/uploads/ProductImages/" +
-                                              image.ProductImageUrl
-                                            : URL.createObjectURL(image)
-                                        }
-                                        width={100}
-                                        height={100}
-                                        alt={`Immagine ${index + 1}`}
-                                        className="w-full object-cover rounded-none"
-                                      />
-                                    </div>
-                                    <div className="p-2 bg-primary text-white rounded-bl-md rounded-br-md flex justify-center uppercase text-sm">
-                                      Copertina
-                                    </div>
+                            productData.ProductImages.map((image: any, index: number) => (
+                              <div
+                                key={index}
+                                className="border-2 rounded-lg shadow-sm flex flex-col items-center justify-between w-fit p-3 relative"
+                              >
+                                <Checkbox
+                                  checked={selectedImages.includes(index)}
+                                  onChange={() => handleCheckboxChange(index)}
+                                  className="absolute top-2 left-2 z-10"
+                                />
+                                <Image
+                                  src={
+                                    image.ProductImageUrl
+                                      ? image.ProductImageUrl.includes("https://")
+                                        ? image.ProductImageUrl
+                                        : `${image.ProductImageUrl}`
+                                      : URL.createObjectURL(image)
+                                  }
+                                  width={100}
+                                  height={100}
+                                  alt={`Immagine ${index + 1}`}
+                                  className="w-full h-[100px] object-cover rounded-lg"
+                                  onError={() => {
+                                    // Fallback handling without using event details
+                                  }}
+                                />
+                                {index === 0 && (
+                                  <div className="absolute bottom-0 left-0 right-0 p-2 bg-primary text-white text-center uppercase text-sm rounded-b-lg">
+                                    Copertina
                                   </div>
-                                ) : (
-                                  <div
-                                    key={index}
-                                    className="border-2 rounded-lg shadow-sm flex flex-row items-center justify-between w-fit p-3"
-                                  >
-                                    <Checkbox
-                                      checked={selectedImages.includes(index)}
-                                      onChange={() =>
-                                        handleCheckboxChange(index)
-                                      }
-                                    />
-
-                                    <Image
-                                      src={
-                                        image.ProductImageUrl
-                                          ? API_URL_IMG +
-                                            "/uploads/ProductImages/" +
-                                            image.ProductImageUrl
-                                          : URL.createObjectURL(image)
-                                      }
-                                      width={100}
-                                      height={100}
-                                      alt={`Immagine ${index + 1}`}
-                                      className="w-full object-cover rounded-none"
-                                    />
-                                  </div>
-                                )
-                            )
+                                )}
+                              </div>
+                            ))
                           )}
                         </div>
                       </div>
@@ -555,12 +474,8 @@ export default function AddProductPage() {
                   <Tab key="dimensioni" title="Dimensioni">
                     <div className="grid grid-cols-6 gap-6">
                       <div className="col-span-6 sm:col-span-3">
-                        <label
-                          htmlFor="Depth"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Profondità{" "}
-                          <span className="text-red-600 font-bold">*</span>
+                        <label htmlFor="Depth" className="block text-sm font-medium leading-6 text-gray-900">
+                          Profondità <span className="text-red-600 font-bold">*</span>
                         </label>
                         <Input
                           variant="bordered"
@@ -576,12 +491,8 @@ export default function AddProductPage() {
                         />
                       </div>
                       <div className="col-span-6 sm:col-span-3">
-                        <label
-                          htmlFor="Height"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Altezza{" "}
-                          <span className="text-red-600 font-bold">*</span>
+                        <label htmlFor="Height" className="block text-sm font-medium leading-6 text-gray-900">
+                          Altezza <span className="text-red-600 font-bold">*</span>
                         </label>
                         <Input
                           variant="bordered"
@@ -597,12 +508,8 @@ export default function AddProductPage() {
                         />
                       </div>
                       <div className="col-span-6 sm:col-span-3">
-                        <label
-                          htmlFor="Width"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          Larghezza{" "}
-                          <span className="text-red-600 font-bold">*</span>
+                        <label htmlFor="Width" className="block text-sm font-medium leading-6 text-gray-900">
+                          Larghezza <span className="text-red-600 font-bold">*</span>
                         </label>
                         <Input
                           variant="bordered"
@@ -618,10 +525,7 @@ export default function AddProductPage() {
                         />
                       </div>
                       <div className="col-span-6 sm:col-span-3">
-                        <label
-                          htmlFor="Weight"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
+                        <label htmlFor="Weight" className="block text-sm font-medium leading-6 text-gray-900">
                           Peso <span className="text-red-600 font-bold">*</span>
                         </label>
                         <Input
@@ -659,5 +563,6 @@ export default function AddProductPage() {
         </div>
       </main>
     </div>
-  );
+  )
 }
+
