@@ -1,201 +1,207 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
-import ApexCharts from "react-apexcharts";
-import { Spinner } from "@heroui/react";
+"use client"
 
-// Interfacce
+import { useEffect, useState } from "react"
+import ApexCharts from "react-apexcharts"
+import axios from "axios"
+
 interface CategoryCount {
-  CategoryName: string;
-  Count: number;
+  CategoryName: string
+  Count: number
 }
 
 interface ChartData {
-  series: number[];
-  options: any;
+  series: number[]
+  labels: string[]
+  colors: string[]
 }
 
-// Funzione per generare colori
-const stringToColor = (str: string): string => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue = hash % 360;
-  const saturation = 70;
-  const lightness = 55 + (hash % 20);
-  return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-};
+// Generate visually pleasing colors using HSL
+const generateChartColors = (count: number): string[] => {
+  return Array.from({ length: count }, (_, i) => {
+    const hue = (i * 360) / count
+    return `hsl(${hue}, 70%, 50%)`
+  })
+}
 
-const ProductDistributionChart: React.FC = () => {
-  const [chartData, setChartData] = useState<ChartData>({ series: [], options: {} });
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // Stato per gestire la modale
+export default function ProductDistributionChart() {
+  const [chartData, setChartData] = useState<ChartData>({
+    series: [],
+    labels: [],
+    colors: [],
+  })
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Funzione per calcolare le percentuali e raggruppare le categorie minori
-  const calculatePercentagesAndGroup = (data: CategoryCount[]): { percentages: number[]; categories: string[] } => {
-    const total = data.reduce((sum, item) => sum + item.Count, 0);
+  const processData = (data: CategoryCount[]) => {
+    const total = data.reduce((sum, item) => sum + item.Count, 0)
+    const sortedData = [...data].sort((a, b) => b.Count - a.Count)
 
-    const percentages: number[] = [];
-    const categories: string[] = [];
-    let otherPercentage = 0;
-
-    data
-      .sort((a, b) => b.Count - a.Count) // Ordina per quantità decrescente
-      .forEach((item) => {
-        const percentage = (item.Count / total) * 100;
-        if (percentages.length < 10 && percentage >= 2) {
-          percentages.push(Number(percentage.toFixed(1)));
-          categories.push(item.CategoryName);
-        } else {
-          otherPercentage += percentage;
-        }
-      });
-
-    if (otherPercentage > 0) {
-      percentages.push(Number(otherPercentage.toFixed(1)));
-      categories.push("Altre categorie");
+    const processedData = {
+      series: [] as number[],
+      labels: [] as string[],
     }
 
-    return { percentages, categories };
-  };
-
-  const fetchProductDistribution = async () => {
-    try {
-      const response = await axios.get<CategoryCount[]>("/Products/GET/GetCategoryStats");
-      const data = Array.isArray(response.data) ? response.data : [response.data];
-
-      if (data && data.length > 0) {
-        const { percentages, categories } = calculatePercentagesAndGroup(data);
-        const categoryColors = categories.map((category) => stringToColor(category));
-
-        setChartData({
-          series: percentages,
-          options: {
-            chart: {
-              type: "donut",
-              animations: {
-                enabled: true,
-                easing: "easeinout",
-                speed: 800,
-              },
-              toolbar: {
-                show: false,
-              },
-            },
-            labels: categories,
-            colors: categoryColors,
-            dataLabels: {
-              enabled: true,
-              formatter: (val: number, opts: any) => {
-                const name = opts.w.globals.labels[opts.seriesIndex];
-                return name.length > 10 ? name.slice(0, 10) + "..." : name;
-              },
-              style: {
-                fontSize: "14px",
-                fontWeight: "bold",
-                colors: ["#000"],
-              },
-            },
-            tooltip: {
-              y: {
-                formatter: (val: number) => val.toFixed(1) + "%",
-              },
-            },
-            legend: {
-              position: "bottom",
-              fontSize: "12px",
-              labels: {
-                colors: "#333",
-              },
-              formatter: (seriesName: string, opts: any) => {
-                const percentage = opts.w.globals.series[opts.seriesIndex];
-                return `${seriesName} (${percentage.toFixed(1)}%)`;
-              },
-            },
-            responsive: [
-              {
-                breakpoint: 768,
-                options: {
-                  chart: {
-                    width: "100%",
-                  },
-                  legend: {
-                    position: "bottom",
-                  },
-                },
-              },
-            ],
-          },
-        });
+    // Process top categories (>= 2%)
+    let othersSum = 0
+    sortedData.forEach((item) => {
+      const percentage = (item.Count / total) * 100
+      if (processedData.series.length < 9 && percentage >= 2) {
+        processedData.series.push(Number(percentage.toFixed(1)))
+        processedData.labels.push(item.CategoryName)
       } else {
-        setError("Dati insufficienti o non disponibili.");
+        othersSum += percentage
       }
-    } catch (error) {
-      console.error("Errore nel recuperare i dati:", error);
-      setError("Errore nel recuperare i dati.");
-    } finally {
-      setLoading(false);
+    })
+
+    // Add "Others" category if exists
+    if (othersSum > 0) {
+      processedData.series.push(Number(othersSum.toFixed(1)))
+      processedData.labels.push("Altre categorie")
     }
-  };
+
+    return {
+      ...processedData,
+      colors: generateChartColors(processedData.labels.length),
+    }
+  }
 
   useEffect(() => {
-    fetchProductDistribution();
-  }, []);
+    const fetchData = async () => {
+      try {
+        const response = await axios.get<CategoryCount[]>("/Products/GET/GetCategoryStats")
+        const data = Array.isArray(response.data) ? response.data : [response.data]
 
-  if (loading) {
+        if (!data?.length) {
+          throw new Error("Nessun dato disponibile")
+        }
+
+        setChartData(processData(data))
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Errore nel caricamento dei dati")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [])
+
+  const getChartOptions = (height: number) => ({
+    chart: {
+      type: "donut" as const,
+      animations: {
+        enabled: true,
+        easing: "easeinout",
+        speed: 800,
+      },
+      fontFamily: "inherit",
+      background: "transparent",
+    },
+    colors: chartData.colors,
+    labels: chartData.labels,
+    legend: {
+      position: "bottom" as const,
+      fontSize: "14px",
+      markers: {
+        size: 3,
+      },
+      formatter: (seriesName: string, opts: any) => {
+        const percentage = opts.w.globals.series[opts.seriesIndex]
+        return `${seriesName} (${percentage}%)`
+      },
+    },
+    plotOptions: {
+      pie: {
+        donut: {
+          size: "50%",
+          labels: {
+            show: true,
+            name: {
+              show: true,
+              fontSize: "16px",
+              fontWeight: 600,
+            },
+            value: {
+              show: true,
+              fontSize: "14px",
+              formatter: (val: string) => `${val}%`,
+            },
+            total: {
+              show: true,
+              label: "Totale",
+              formatter: () => "100%",
+            },
+          },
+        },
+      },
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    tooltip: {
+      y: {
+        formatter: (val: number) => `${val}%`,
+      },
+    },
+    stroke: {
+      width: 2,
+    },
+    responsive: [
+      {
+        breakpoint: 480,
+        options: {
+          chart: {
+            height: 300,
+          },
+          legend: {
+            position: "bottom",
+          },
+        },
+      },
+    ],
+  })
+
+  
+
+  if (isLoading) {
     return (
-      <div className="flex justify-center items-center p-5 border-2 rounded-lg bg-gray-100">
-        <Spinner size="sm" />
-        <span className="ml-2 text-gray-700">Caricamento dei dati...</span>
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center gap-2">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+            <p className="text-sm text-gray-500">Caricamento dati...</p>
+          </div>
+        </div>
       </div>
-    );
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <p className="text-sm text-red-500">{error}</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="flex justify-center items-center p-5 border-2 rounded-lg">
-      <div className="w-full max-w-3xl">
-        <h2 className="text-xl font-bold text-center text-gray-800 mb-6">
-          Distribuzione dei Pezzi in Magazzino per Categoria
-        </h2>
-        {error ? (
-          <div className="text-center text-red-500">{error}</div>
-        ) : (
-          <>
-            {/* Preview del grafico */}
-            <div className="border border-gray-300 rounded-lg p-4 shadow-md bg-white">
-              <ApexCharts options={chartData.options} series={chartData.series} type="donut" height={300} />
-            </div>
-
-            {/* Pulsante per aprire la modale */}
-            <div className="flex justify-center mt-6">
-              <button
-                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg text-lg transition-transform transform hover:scale-105"
-                onClick={() => setIsModalOpen(true)}
-              >
-                Apri Grafico a Schermo Intero
-              </button>
-            </div>
-
-            {/* Modale */}
-            {isModalOpen && (
-              <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70">
-                <div className="bg-white rounded-lg shadow-2xl w-11/12 max-w-5xl p-6 relative">
-                  <button
-                    className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white font-bold rounded-full h-10 w-10 flex items-center justify-center text-xl"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    &times;
-                  </button>
-                  <ApexCharts options={chartData.options} series={chartData.series} type="donut" height={600} />
-                </div>
-              </div>
-            )}
-          </>
-        )}
+    <div className="rounded-lg border border-gray-200 bg-white">
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold text-gray-900">Distribuzione Prodotti per Categoria</h2>
+       
+        </div>
+        <div className="h-[400px] w-full">
+          {chartData.series.length > 0 && (
+            <ApexCharts options={getChartOptions(400)} series={chartData.series} type="donut" height="100%" />
+          )}
+        </div>
       </div>
-    </div>
-  );
-};
 
-export default ProductDistributionChart;
+      
+    </div>
+  )
+}
+
