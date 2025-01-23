@@ -1,4 +1,3 @@
-import React from "react";
 import ProductTable from "../../Components/Layout/Products/Table/ProductTable";
 
 export default function ProductPage() {

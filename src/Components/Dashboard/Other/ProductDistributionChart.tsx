@@ -1,92 +1,98 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import ApexCharts from "react-apexcharts"
-import axios from "axios"
+import { useEffect, useState } from "react";
+import ApexCharts from "react-apexcharts";
+import axios from "axios";
 
 interface CategoryCount {
-  CategoryName: string
-  Count: number
+  CategoryName: string;
+  Count: number;
 }
 
 interface ChartData {
-  series: number[]
-  labels: string[]
-  colors: string[]
+  series: number[];
+  labels: string[];
+  colors: string[];
 }
 
 // Generate visually pleasing colors using HSL
 const generateChartColors = (count: number): string[] => {
   return Array.from({ length: count }, (_, i) => {
-    const hue = (i * 360) / count
-    return `hsl(${hue}, 70%, 50%)`
-  })
-}
+    const hue = (i * 360) / count;
+    return `hsl(${hue}, 70%, 50%)`;
+  });
+};
 
 export default function ProductDistributionChart() {
   const [chartData, setChartData] = useState<ChartData>({
     series: [],
     labels: [],
     colors: [],
-  })
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const processData = (data: CategoryCount[]) => {
-    const total = data.reduce((sum, item) => sum + item.Count, 0)
-    const sortedData = [...data].sort((a, b) => b.Count - a.Count)
+    const total = data.reduce((sum, item) => sum + item.Count, 0);
+    const sortedData = [...data].sort((a, b) => b.Count - a.Count);
 
     const processedData = {
       series: [] as number[],
       labels: [] as string[],
-    }
+    };
 
     // Process top categories (>= 2%)
-    let othersSum = 0
+    let othersSum = 0;
     sortedData.forEach((item) => {
-      const percentage = (item.Count / total) * 100
+      const percentage = (item.Count / total) * 100;
       if (processedData.series.length < 9 && percentage >= 2) {
-        processedData.series.push(Number(percentage.toFixed(1)))
-        processedData.labels.push(item.CategoryName)
+        processedData.series.push(Number(percentage.toFixed(1)));
+        processedData.labels.push(item.CategoryName);
       } else {
-        othersSum += percentage
+        othersSum += percentage;
       }
-    })
+    });
 
     // Add "Others" category if exists
     if (othersSum > 0) {
-      processedData.series.push(Number(othersSum.toFixed(1)))
-      processedData.labels.push("Altre categorie")
+      processedData.series.push(Number(othersSum.toFixed(1)));
+      processedData.labels.push("Altre categorie");
     }
 
     return {
       ...processedData,
       colors: generateChartColors(processedData.labels.length),
-    }
-  }
+    };
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get<CategoryCount[]>("/Products/GET/GetCategoryStats")
-        const data = Array.isArray(response.data) ? response.data : [response.data]
+        const response = await axios.get<CategoryCount[]>(
+          "/Products/GET/GetCategoryStats"
+        );
+        const data = Array.isArray(response.data)
+          ? response.data
+          : [response.data];
 
         if (!data?.length) {
-          throw new Error("Nessun dato disponibile")
+          throw new Error("Nessun dato disponibile");
         }
 
-        setChartData(processData(data))
+        setChartData(processData(data));
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Errore nel caricamento dei dati")
+        setError(
+          err instanceof Error ? err.message : "Errore nel caricamento dei dati"
+        );
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
-  const getChartOptions = (height: number) => ({
+  const getChartOptions = () => ({
     chart: {
       type: "donut" as const,
       animations: {
@@ -106,8 +112,8 @@ export default function ProductDistributionChart() {
         size: 3,
       },
       formatter: (seriesName: string, opts: any) => {
-        const percentage = opts.w.globals.series[opts.seriesIndex]
-        return `${seriesName} (${percentage}%)`
+        const percentage = opts.w.globals.series[opts.seriesIndex];
+        return `${seriesName} (${percentage}%)`;
       },
     },
     plotOptions: {
@@ -159,9 +165,7 @@ export default function ProductDistributionChart() {
         },
       },
     ],
-  })
-
-  
+  });
 
   if (isLoading) {
     return (
@@ -173,7 +177,7 @@ export default function ProductDistributionChart() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -183,25 +187,28 @@ export default function ProductDistributionChart() {
           <p className="text-sm text-red-500">{error}</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white">
       <div className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Distribuzione Prodotti per Categoria</h2>
-       
+          <h2 className="text-xl font-semibold text-gray-900">
+            Distribuzione Prodotti per Categoria
+          </h2>
         </div>
         <div className="h-[400px] w-full">
           {chartData.series.length > 0 && (
-            <ApexCharts options={getChartOptions(400)} series={chartData.series} type="donut" height="100%" />
+            <ApexCharts
+              options={getChartOptions()}
+              series={chartData.series}
+              type="donut"
+              height="100%"
+            />
           )}
         </div>
       </div>
-
-      
     </div>
-  )
+  );
 }
-

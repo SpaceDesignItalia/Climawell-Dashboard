@@ -13,7 +13,6 @@ import {
 import VisibilityRoundedIcon from "@mui/icons-material/VisibilityRounded";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { API_URL_IMG } from "../../../../API/API";
 
 interface Product {
   CategoryId: number;
@@ -179,10 +178,7 @@ export default function ViewProductModal({
                           width={400}
                           height={400}
                           alt={image.ProductImageUrl}
-                          src={
-                        
-                            image.ProductImageUrl
-                          }
+                          src={image.ProductImageUrl}
                           className="rounded-lg w-auto border-2"
                         />
                       ))}
