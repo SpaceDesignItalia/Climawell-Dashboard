@@ -16,7 +16,7 @@ import {
   DropdownMenu,
   DropdownTrigger,
   Skeleton,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import axios from "axios";
 import { Fragment, useEffect, useState } from "react";
 import { API_URL_IMG } from "../../API/API";
@@ -68,7 +68,10 @@ export default function Sidebar() {
         icon: StorefrontOutlinedIcon,
         current: isSubRoute({
           currentUrl,
-          parentRoute: { href: "/products", subRoutes: [] },
+          parentRoute: {
+            href: "/products",
+            subRoutes: ["/products/add-product", "/products/edit-product"],
+          },
         }),
       },
       {
@@ -77,7 +80,13 @@ export default function Sidebar() {
         icon: FormatListBulletedRoundedIcon,
         current: isSubRoute({
           currentUrl,
-          parentRoute: { href: "/categories", subRoutes: [] },
+          parentRoute: {
+            href: "/categories",
+            subRoutes: [
+              "/categories/add-category",
+              "/categories/edit-category",
+            ],
+          },
         }),
       },
     ]);
