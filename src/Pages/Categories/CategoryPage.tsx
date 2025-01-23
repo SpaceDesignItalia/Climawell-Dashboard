@@ -1,4 +1,3 @@
-import React from "react";
 import CategoryTable from "../../Components/Layout/Categories/Table/CategoryTable";
 
 export default function CategoryPage() {
