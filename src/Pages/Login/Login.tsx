@@ -88,10 +88,10 @@ export default function Login() {
       <StatusAlert AlertData={alertData} />
       <div className="flex h-screen flex-1 flex-col justify-center px-5 py-12 sm:px-6 lg:px-8 bg-[#F9FAFB] gap-10">
         <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <img
+        <img
             alt="Climawell"
-            src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
-            className="mx-auto h-10 w-auto"
+            src="https://static.wixstatic.com/media/fb5ac9_9096a8bcdb354787a339ef207dc014e9~mv2.png/v1/fill/w_242,h_242,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/PNGGGGGGGGGGGGGGGGGGGGGGG.png"
+            className="mx-auto h-20 w-auto"
           />
           <h2 className="mt-6 text-center text-2xl/9 font-bold tracking-tight text-gray-900">
             Accedi al portale
